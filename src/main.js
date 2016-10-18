@@ -67,6 +67,9 @@ databox_directory.register_driver('databox','databox-driver-twitter-stream', 'A 
     proms = [
       databox_directory.register_sensor_type('twitterUserTimeLine'),
       databox_directory.register_sensor_type('twitterHashTagStream'),
+      databox_directory.register_sensor_type('twitterDirectMessage'),
+      databox_directory.register_sensor_type('twitterRetweet'),
+      databox_directory.register_sensor_type('twitterFavorite'),
     ]
     return Promise.all(proms);
   })
@@ -76,6 +79,9 @@ databox_directory.register_driver('databox','databox-driver-twitter-stream', 'A 
     proms = [
       databox_directory.register_sensor(DRIVER_ID, SENSOR_TYPE_IDs[0].id, DATASTORE_ID, VENDOR_ID, 'twitterUserTimeLine', '', '', 'Twitter user timeline data', 'The Internet'),
       databox_directory.register_sensor(DRIVER_ID, SENSOR_TYPE_IDs[1].id, DATASTORE_ID, VENDOR_ID, 'twitterHashTagStream', '', '', 'Twitter hashtag data', 'The Internet'),
+      databox_directory.register_sensor(DRIVER_ID, SENSOR_TYPE_IDs[1].id, DATASTORE_ID, VENDOR_ID, 'twitterDirectMessage', '', '', 'Twitter users direct messages', 'The Internet'),
+      databox_directory.register_sensor(DRIVER_ID, SENSOR_TYPE_IDs[1].id, DATASTORE_ID, VENDOR_ID, 'twitterRetweet', '', '', 'Twitter users retweets', 'The Internet'),
+      databox_directory.register_sensor(DRIVER_ID, SENSOR_TYPE_IDs[1].id, DATASTORE_ID, VENDOR_ID, 'twitterFavorite', '', '', 'Twitter users favorite tweets', 'The Internet'),
     ]
     return Promise.all(proms);
   })
@@ -96,7 +102,7 @@ databox_directory.register_driver('databox','databox-driver-twitter-stream', 'A 
           if(twitter.isSignedIn() == true) {
             resolve();
           } else {
-            console.log("Waiting to twiter auth .....")
+            console.log("Waiting to twitter auth .....")
             setTimeout(waitForIt,2000);
           }
 
