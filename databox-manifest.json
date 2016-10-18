@@ -1,0 +1,37 @@
+{
+  "manifest-version": 1,
+
+  "name": "databox-driver-twitter-stream",
+  "version": "0.1.0",
+
+  "description": "A simple Databox store for json blob data",
+  "author": "Anthony Brown <Anthony.Brown@nottingham.ac.uk> ()",
+  "license": "MIT",
+
+	"databox-type":"driver",
+
+  "tags": [
+    "store",
+    "blob",
+    "db",
+    "native",
+    "json",
+    "timseries"
+  ],
+
+  "homepage": "https://github.com/me-box/databox-driver-twitter-stream",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/me-box/databox-driver-twitter-stream.git"
+  },
+
+  "network-permissions": [
+  ],
+  
+  "hardware-permissions": [
+  ],
+
+  "resource-requirements": {
+    "store":"databox-store-blob"
+  }
+}
