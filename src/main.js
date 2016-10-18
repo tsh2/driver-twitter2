@@ -5,7 +5,7 @@ var databox_directory = require("./utils/databox_directory.js");
 var request = require('request');
 
 var twitter = require('./twitter.js');
-var sensors = ['twitterUserTimeLine','twitterHashTagStream', 'twitterDirectMessage', 'twittrRetweet', 'twitterFavorite'];
+var sensors = ['twitterUserTimeLine','twitterHashTagStream', 'twitterDirectMessage', 'twitterRetweet', 'twitterFavorite'];
 
 var DATABOX_STORE_BLOB_ENDPOINT = process.env.DATABOX_STORE_BLOB_ENDPOINT;
 
@@ -110,7 +110,7 @@ databox_directory.register_driver('databox','databox-driver-twitter-stream', 'A 
 
     T = twitter.Twit();
 
-    var HashtagStream = T.stream('statuses/filter', { track: HASH_TAGS_TO_TRACK });
+    var HashtagStream = T.stream('statuses/filter', { track: HASH_TAGS_TO_TRACK , language:'en'});
     HashtagStream.on('tweet', function (tweet) {
       save('twitterHashTagStream', tweet);
     })
