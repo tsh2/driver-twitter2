@@ -79,9 +79,9 @@ databox_directory.register_driver('databox','databox-driver-twitter-stream', 'A 
     proms = [
       databox_directory.register_sensor(DRIVER_ID, SENSOR_TYPE_IDs[0].id, DATASTORE_ID, VENDOR_ID, 'twitterUserTimeLine', '', '', 'Twitter user timeline data', 'The Internet'),
       databox_directory.register_sensor(DRIVER_ID, SENSOR_TYPE_IDs[1].id, DATASTORE_ID, VENDOR_ID, 'twitterHashTagStream', '', '', 'Twitter hashtag data', 'The Internet'),
-      databox_directory.register_sensor(DRIVER_ID, SENSOR_TYPE_IDs[1].id, DATASTORE_ID, VENDOR_ID, 'twitterDirectMessage', '', '', 'Twitter users direct messages', 'The Internet'),
-      databox_directory.register_sensor(DRIVER_ID, SENSOR_TYPE_IDs[1].id, DATASTORE_ID, VENDOR_ID, 'twitterRetweet', '', '', 'Twitter users retweets', 'The Internet'),
-      databox_directory.register_sensor(DRIVER_ID, SENSOR_TYPE_IDs[1].id, DATASTORE_ID, VENDOR_ID, 'twitterFavorite', '', '', 'Twitter users favorite tweets', 'The Internet'),
+      databox_directory.register_sensor(DRIVER_ID, SENSOR_TYPE_IDs[2].id, DATASTORE_ID, VENDOR_ID, 'twitterDirectMessage', '', '', 'Twitter users direct messages', 'The Internet'),
+      databox_directory.register_sensor(DRIVER_ID, SENSOR_TYPE_IDs[3].id, DATASTORE_ID, VENDOR_ID, 'twitterRetweet', '', '', 'Twitter users retweets', 'The Internet'),
+      databox_directory.register_sensor(DRIVER_ID, SENSOR_TYPE_IDs[4].id, DATASTORE_ID, VENDOR_ID, 'twitterFavorite', '', '', 'Twitter users favorite tweets', 'The Internet'),
     ]
     return Promise.all(proms);
   })
