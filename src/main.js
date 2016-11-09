@@ -7,7 +7,7 @@ var request = require('request');
 var twitter = require('./twitter.js');
 var sensors = ['twitterUserTimeLine','twitterHashTagStream', 'twitterDirectMessage', 'twitterRetweet', 'twitterFavorite'];
 
-var DATABOX_STORE_BLOB_ENDPOINT = process.env.DATABOX_STORE_BLOB_ENDPOINT;
+var DATABOX_STORE_BLOB_ENDPOINT = process.env.DATABOX_DRIVER_TWITTER_STREAM_DATABOX_STORE_BLOB_ENDPOINT;
 
 var HASH_TAGS_TO_TRACK = ['#raspberrypi', '#mozfest', '#databox', '#iot', '#NobelPrize'];
 var TWITER_USER = 'databox_mozfest';
@@ -153,7 +153,7 @@ module.exports = app;
 
 
 function save(type,data) {
-      console.log(type, data);
+      console.log("Saving data::", type, data.text);
       if(VENDOR_ID != null) {
         var options = {
             uri: DATABOX_STORE_BLOB_ENDPOINT + '/data',
@@ -165,7 +165,6 @@ function save(type,data) {
               'data': data   
             }
         };
-        console.log("Saving data::", options);
-        request.post(options, (error, response, body) => {console.log(error, body)});
+        request.post(options, (error, response, body) => { if(error) console.log(error, body);});
       }
     }
