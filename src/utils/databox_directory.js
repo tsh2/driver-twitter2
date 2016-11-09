@@ -225,6 +225,7 @@ exports.get_my_registered_sensors = function(vendor_id, done) {
 }
 
 exports.get_datastore_id = function(hostname, done) {
+  
   return new Promise((resolve, reject) => {
     var options = {
         uri: databox_directory_url+'/datastore/get_id',
@@ -234,13 +235,24 @@ exports.get_datastore_id = function(hostname, done) {
           "hostname": hostname
         }
     };
-    request(options, function (error, response, body) {
+    
+    var datastoreCallback = function (error, response, body) {
         if(error) {
-          reject(error);
+          console.log("Can not get datastore id! waiting 5s before retrying");
+          setTimeout(request,5000,options,datastoreCallback);
           return;
         }
-        resolve(body['id']);
-    });
+        if(typeof body != 'undefined' && 'id' in body) {
+          resolve(body['id']);
+        } else {
+          console.log("Can not get datastore id! waiting 5s before retrying");
+          setTimeout(request,5000,options,datastoreCallback);
+          return;
+        }
+
+    };
+
+    request(options,datastoreCallback);
   });
 }
 
