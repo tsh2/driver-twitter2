@@ -183,7 +183,7 @@ waitForDatastore()
     console.log("VENDOR_ID", VENDOR_ID);
     console.log("DRIVER_ID", DRIVER_ID);
 
-    return databox_directory.get_datastore_id('databox-store-blob');
+    return databox_directory.get_datastore_id('databox-driver-twitter-stream-databox-store-blob');
   })
   .then ((datastore_id) => {
     DATASTORE_ID = datastore_id;
