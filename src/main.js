@@ -90,14 +90,14 @@ var waitForTwitterAuth = function () {
   });
 };
 
-var register_sensor = function (vendor, sensor_id, unit, description, location ) {
+var register_sensor = function (vendor, sensor_id,sensor_type, unit, description, location ) {
   var options = {
-        uri: databox_directory_url+'/cat/add',
+        uri: DATABOX_STORE_BLOB_ENDPOINT+'/cat/add/'+sensor_id,
         method: 'POST',
         json: 
         {
           "vendor": vendor,
-          "sensor_id": sensor_id,
+          "sensor_type": sensor_type,
           "unit": unit,
           "description": description,
           "location": location,
@@ -111,9 +111,10 @@ var register_sensor = function (vendor, sensor_id, unit, description, location )
           console.log(error);
           console.log("Can not register sensor with datastore! waiting 5s before retrying");
           setTimeout(request, 5000, options, register_sensor_callback);
+          return;
         }
         resolve(body);
-    }
+    };
     console.log("Trying to register sensor with datastore.", options);
     request(options,register_sensor_callback);
   
@@ -123,11 +124,11 @@ var register_sensor = function (vendor, sensor_id, unit, description, location )
 waitForDatastore()
   .then(() =>{
     proms = [
-      register_sensor(vendor, 'twitterUserTimeLine', '', 'Twitter user timeline data', 'The Internet'),
-      register_sensor(vendor, 'twitterHashTagStream', '', 'Twitter hashtag data', 'The Internet'),
-      register_sensor(vendor, 'twitterDirectMessage', '', 'Twitter users direct messages', 'The Internet'),
-      register_sensor(vendor, 'twitterRetweet', '', 'Twitter users retweets', 'The Internet'),
-      register_sensor(vendor, 'twitterFavorite', '', 'Twitter users favorite tweets', 'The Internet')
+      register_sensor(vendor, 'twitterUserTimeLine','twitterUserTimeLine', '', 'Twitter user timeline data', 'The Internet'),
+      register_sensor(vendor, 'twitterHashTagStream','twitterHashTagStream', '', 'Twitter hashtag data', 'The Internet'),
+      register_sensor(vendor, 'twitterDirectMessage','twitterDirectMessage', '', 'Twitter users direct messages', 'The Internet'),
+      register_sensor(vendor, 'twitterRetweet','twitterRetweet', '', 'Twitter users retweets', 'The Internet'),
+      register_sensor(vendor, 'twitterFavorite','twitterFavorite', '', 'Twitter users favorite tweets', 'The Internet')
     ];
     return Promise.all(proms);
   })
@@ -171,124 +172,19 @@ waitForDatastore()
     console.log(err);
   });
 
-  
-
-
-/*databox_directory.register_driver('databox','databox-driver-twitter-stream', 'A Databox driver to stream data from twitter')
-   .then((ids) => {
-    console.log(ids);
-    VENDOR_ID = ids['vendor_id'];
-    DRIVER_ID = ids['driver_id'];
-    
-    console.log("VENDOR_ID", VENDOR_ID);
-    console.log("DRIVER_ID", DRIVER_ID);
-
-    return databox_directory.get_datastore_id('databox-driver-twitter-stream-databox-store-blob');
-  })
-  .then ((datastore_id) => {
-    DATASTORE_ID = datastore_id;
-    console.log("DATASTORE_ID", DATASTORE_ID);
-    proms = [
-      databox_directory.register_sensor_type('twitterUserTimeLine'),
-      databox_directory.register_sensor_type('twitterHashTagStream'),
-      databox_directory.register_sensor_type('twitterDirectMessage'),
-      databox_directory.register_sensor_type('twitterRetweet'),
-      databox_directory.register_sensor_type('twitterFavorite'),
-    ]
-    return Promise.all(proms);
-  })
-  .then ((sensorTypeIds) => {
-    console.log('sensorTypeIds::', sensorTypeIds);
-    SENSOR_TYPE_IDs = sensorTypeIds;
-    proms = [
-      databox_directory.register_sensor(DRIVER_ID, SENSOR_TYPE_IDs[0].id, DATASTORE_ID, VENDOR_ID, 'twitterUserTimeLine', '', '', 'Twitter user timeline data', 'The Internet'),
-      databox_directory.register_sensor(DRIVER_ID, SENSOR_TYPE_IDs[1].id, DATASTORE_ID, VENDOR_ID, 'twitterHashTagStream', '', '', 'Twitter hashtag data', 'The Internet'),
-      databox_directory.register_sensor(DRIVER_ID, SENSOR_TYPE_IDs[2].id, DATASTORE_ID, VENDOR_ID, 'twitterDirectMessage', '', '', 'Twitter users direct messages', 'The Internet'),
-      databox_directory.register_sensor(DRIVER_ID, SENSOR_TYPE_IDs[3].id, DATASTORE_ID, VENDOR_ID, 'twitterRetweet', '', '', 'Twitter users retweets', 'The Internet'),
-      databox_directory.register_sensor(DRIVER_ID, SENSOR_TYPE_IDs[4].id, DATASTORE_ID, VENDOR_ID, 'twitterFavorite', '', '', 'Twitter users favorite tweets', 'The Internet'),
-    ]
-    return Promise.all(proms);
-  })
-  .then((sensorIds) => {
-    console.log("sensorIds::", sensorIds); 
-    for(var i = 0; i < SENSOR_TYPE_IDs.length; i++) {
-      SENSOR_IDs[sensors[i]] = sensorIds[i].id;
-    }
-
-    console.log("SENSOR_IDs", SENSOR_IDs);
-
-    app.listen(8080);
-
-    var waitForTwitterAuth = function () {
-      return new Promise((resolve, reject)=>{
-        
-        var waitForIt = function() {
-          if(twitter.isSignedIn() == true) {
-            resolve();
-          } else {
-            console.log("Waiting to twitter auth .....")
-            setTimeout(waitForIt,2000);
-          }
-
-        }
-        waitForIt();
-      })
-    }
-    return waitForTwitterAuth();
-  })
-  .then(()=>{
-
-    T = twitter.Twit();
-
-    var HashtagStream = T.stream('statuses/filter', { track: HASH_TAGS_TO_TRACK , language:'en'});
-    HashtagStream.on('tweet', function (tweet) {
-      save('twitterHashTagStream', tweet);
-    })
-
-    var UserStream = T.stream('user', { stringify_friend_ids: true, with: 'followings', replies:'all' })
-    
-    UserStream.on('tweet', function (event) {
-      save('twitterUserTimeLine',event)
-    })
-
-    UserStream.on('favorite', function (event) {
-      save('twitterFavorite',event)
-    })
-
-    UserStream.on('quoted_tweet', function (event) {
-      save('twitterRetweet',event)
-    })
-
-    UserStream.on('retweeted_retweet', function (event) {
-      save('twitterRetweet',event)
-    })
-
-    UserStream.on('direct_message', function (event) {
-      save('twitterDirectMessage',event);
-    })
-    
-  })
-  .catch((err) => {
-    console.log(err)
-  });*/
-
-
 module.exports = app;
 
-
-function save(type,data) {
-      console.log("Saving data::", type, data.text);
-      if(VENDOR_ID != null) {
-        var options = {
-            uri: DATABOX_STORE_BLOB_ENDPOINT + '/data',
-            method: 'POST',
-            json: 
-            {
-              'sensor_id': SENSOR_IDs[type], 
-              'vendor_id': VENDOR_ID, 
-              'data': data   
-            }
-        };
-        request.post(options, (error, response, body) => { if(error) console.log(error, body);});
-      }
+function save(sensor_id,data) {
+      console.log("Saving data::", sensor_id, data.text);
+      var options = {
+          uri: DATABOX_STORE_BLOB_ENDPOINT + '/data',
+          method: 'POST',
+          json: 
+          {
+            'sensor_id': sensor_id, 
+            'vendor_id': vendor, 
+            'data': data   
+          }
+      };
+      request.post(options, (error, response, body) => { if(error) console.log(error, body);});
     }
