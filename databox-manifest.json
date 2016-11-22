@@ -16,7 +16,7 @@
     "db",
     "native",
     "json",
-    "timseries"
+    "timeseries"
   ],
 
   "homepage": "https://github.com/me-box/databox-driver-twitter-stream",
