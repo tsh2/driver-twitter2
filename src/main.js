@@ -3,7 +3,6 @@
 var express = require("express");
 var bodyParser = require("body-parser");
 var session = require("express-session");
-var databox_directory = require("./utils/databox_directory.js");
 var request = require('request');
 
 var twitter = require('./twitter.js');
