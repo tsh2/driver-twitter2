@@ -1,3 +1,5 @@
+/*jshint esversion: 6 */
+
 var express = require("express");
 var bodyParser = require("body-parser");
 var session = require("express-session");
@@ -50,7 +52,129 @@ app.get("/is-signed-in", function(req, res) {
 
 var T = null;
 
-databox_directory.register_driver('databox','databox-driver-twitter-stream', 'A Databox driver to stream data from twitter')
+var vendor = "databox";
+
+var waitForDatastore = function () {
+  return new Promise((resolve, reject)=>{
+    var untilActive = function (error, response, body) {
+      if(error) {
+        console.log(error);
+      }
+      if (body === 'active') {
+        resolve();
+      }
+      else {
+        setTimeout(() => {
+          request.get(DATABOX_STORE_BLOB_ENDPOINT + "/status", untilActive);
+        }, 1000);
+        console.log("Waiting for datastore ....");
+      }
+    };
+    untilActive({});
+  });
+};
+
+var waitForTwitterAuth = function () {
+  return new Promise((resolve, reject)=>{
+    
+    var waitForIt = function() {
+      if(twitter.isSignedIn() === true) {
+        resolve();
+      } else {
+        console.log("Waiting to twitter auth .....");
+        setTimeout(waitForIt,2000);
+      }
+
+    };
+    waitForIt();
+  });
+};
+
+var register_sensor = function (vendor, sensor_id, unit, description, location ) {
+  var options = {
+        uri: databox_directory_url+'/cat/add',
+        method: 'POST',
+        json: 
+        {
+          "vendor": vendor,
+          "sensor_id": sensor_id,
+          "unit": unit,
+          "description": description,
+          "location": location,
+        }
+    };
+
+  return new Promise((resolve, reject) => {
+    
+    var register_sensor_callback = function (error, response, body) {
+        if (error) {
+          console.log(error);
+          console.log("Can not register sensor with datastore! waiting 5s before retrying");
+          setTimeout(request, 5000, options, register_sensor_callback);
+        }
+        resolve(body);
+    }
+    console.log("Trying to register sensor with datastore.", options);
+    request(options,register_sensor_callback);
+  
+  });
+};
+
+waitForDatastore()
+  .then(() =>{
+    proms = [
+      register_sensor(vendor, 'twitterUserTimeLine', '', 'Twitter user timeline data', 'The Internet'),
+      register_sensor(vendor, 'twitterHashTagStream', '', 'Twitter hashtag data', 'The Internet'),
+      register_sensor(vendor, 'twitterDirectMessage', '', 'Twitter users direct messages', 'The Internet'),
+      register_sensor(vendor, 'twitterRetweet', '', 'Twitter users retweets', 'The Internet'),
+      register_sensor(vendor, 'twitterFavorite', '', 'Twitter users favorite tweets', 'The Internet')
+    ];
+    return Promise.all(proms);
+  })
+  .then(()=>{
+    app.listen(8080);
+    return waitForTwitterAuth();
+  })
+  .then(()=>{
+
+    T = twitter.Twit();
+
+    var HashtagStream = T.stream('statuses/filter', { track: HASH_TAGS_TO_TRACK , language:'en'});
+    HashtagStream.on('tweet', function (tweet) {
+      save('twitterHashTagStream', tweet);
+    });
+
+    var UserStream = T.stream('user', { stringify_friend_ids: true, with: 'followings', replies:'all' })
+    
+    UserStream.on('tweet', function (event) {
+      save('twitterUserTimeLine',event);
+    });
+
+    UserStream.on('favorite', function (event) {
+      save('twitterFavorite',event);
+    });
+
+    UserStream.on('quoted_tweet', function (event) {
+      save('twitterRetweet',event);
+    });
+
+    UserStream.on('retweeted_retweet', function (event) {
+      save('twitterRetweet',event);
+    });
+
+    UserStream.on('direct_message', function (event) {
+      save('twitterDirectMessage',event);
+    });
+    
+  })
+  .catch((err) => {
+    console.log(err);
+  });
+
+  
+
+
+/*databox_directory.register_driver('databox','databox-driver-twitter-stream', 'A Databox driver to stream data from twitter')
    .then((ids) => {
     console.log(ids);
     VENDOR_ID = ids['vendor_id'];
@@ -146,7 +270,7 @@ databox_directory.register_driver('databox','databox-driver-twitter-stream', 'A 
   })
   .catch((err) => {
     console.log(err)
-  });
+  });*/
 
 
 module.exports = app;
