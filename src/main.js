@@ -1,5 +1,5 @@
 /*jshint esversion: 6 */
-
+var https = require('https');
 var express = require("express");
 var bodyParser = require("body-parser");
 var session = require("express-session");
@@ -9,6 +9,20 @@ var twitter = require('./twitter.js');
 var sensors = ['twitterUserTimeLine','twitterHashTagStream', 'twitterDirectMessage', 'twitterRetweet', 'twitterFavorite'];
 
 var DATABOX_STORE_BLOB_ENDPOINT = process.env.DATABOX_DRIVER_TWITTER_STREAM_DATABOX_STORE_BLOB_ENDPOINT;
+
+var CM_HTTPS_CA_ROOT_CERT = process.env.CM_HTTPS_CA_ROOT_CERT || '';
+var agentOptions = {
+	ca: CM_HTTPS_CA_ROOT_CERT
+};
+var httpsAgent = new https.Agent(agentOptions);
+
+
+var HTTPS_CLIENT_CERT = process.env.HTTPS_CLIENT_CERT || '';
+var HTTPS_CLIENT_PRIVATE_KEY = process.env.HTTPS_CLIENT_PRIVATE_KEY || '';
+var credentials = {
+	key:  HTTPS_CLIENT_PRIVATE_KEY,
+	cert: HTTPS_CLIENT_CERT,
+};
 
 var HASH_TAGS_TO_TRACK = ['#raspberrypi', '#mozfest', '#databox', '#iot', '#NobelPrize'];
 var TWITER_USER = 'databox_mozfest';
@@ -64,7 +78,12 @@ var waitForDatastore = function () {
       }
       else {
         setTimeout(() => {
-          request.get(DATABOX_STORE_BLOB_ENDPOINT + "/status", untilActive);
+          var options = {
+              uri: DATABOX_STORE_BLOB_ENDPOINT + "/status",
+              method: 'GET',
+              agent:httpsAgent
+          };
+          request(options, untilActive);
         }, 1000);
         console.log("Waiting for datastore ....");
       }
@@ -100,7 +119,8 @@ var register_sensor = function (vendor, sensor_id,sensor_type, unit, description
           "unit": unit,
           "description": description,
           "location": location,
-        }
+        },
+        agent:httpsAgent
     };
 
   return new Promise((resolve, reject) => {
@@ -132,7 +152,7 @@ waitForDatastore()
     return Promise.all(proms);
   })
   .then(()=>{
-    app.listen(8080);
+    https.createServer(credentials, app).listen(8080);
     return waitForTwitterAuth();
   })
   .then(()=>{
@@ -144,7 +164,7 @@ waitForDatastore()
       save('twitterHashTagStream', tweet);
     });
 
-    var UserStream = T.stream('user', { stringify_friend_ids: true, with: 'followings', replies:'all' })
+    var UserStream = T.stream('user', { stringify_friend_ids: true, with: 'followings', replies:'all' });
     
     UserStream.on('tweet', function (event) {
       save('twitterUserTimeLine',event);
@@ -183,7 +203,8 @@ function save(sensor_id,data) {
             'sensor_id': sensor_id, 
             'vendor_id': vendor, 
             'data': data   
-          }
+          },
+          agent:httpsAgent
       };
       request.post(options, (error, response, body) => { if(error) console.log(error, body);});
     }
