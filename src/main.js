@@ -3,19 +3,13 @@ var https = require('https');
 var express = require("express");
 var bodyParser = require("body-parser");
 var session = require("express-session");
-var request = require('request');
+
+var databoxRequest = require('./lib/databox-request.js');
 
 var twitter = require('./twitter.js');
 var sensors = ['twitterUserTimeLine','twitterHashTagStream', 'twitterDirectMessage', 'twitterRetweet', 'twitterFavorite'];
 
 var DATABOX_STORE_BLOB_ENDPOINT = process.env.DATABOX_DRIVER_TWITTER_STREAM_DATABOX_STORE_BLOB_ENDPOINT;
-
-var CM_HTTPS_CA_ROOT_CERT = process.env.CM_HTTPS_CA_ROOT_CERT || '';
-var agentOptions = {
-	ca: CM_HTTPS_CA_ROOT_CERT
-};
-var httpsAgent = new https.Agent(agentOptions);
-
 
 var HTTPS_CLIENT_CERT = process.env.HTTPS_CLIENT_CERT || '';
 var HTTPS_CLIENT_PRIVATE_KEY = process.env.HTTPS_CLIENT_PRIVATE_KEY || '';
@@ -72,6 +66,8 @@ var waitForDatastore = function () {
     var untilActive = function (error, response, body) {
       if(error) {
         console.log(error);
+      } else if(response.statusCode != 200) {
+        console.log("Error::", body);
       }
       if (body === 'active') {
         resolve();
@@ -81,9 +77,8 @@ var waitForDatastore = function () {
           var options = {
               uri: DATABOX_STORE_BLOB_ENDPOINT + "/status",
               method: 'GET',
-              agent:httpsAgent
           };
-          request(options, untilActive);
+          databoxRequest(options, untilActive);
         }, 1000);
         console.log("Waiting for datastore ....");
       }
@@ -120,7 +115,6 @@ var register_sensor = function (vendor, sensor_id,sensor_type, unit, description
           "description": description,
           "location": location,
         },
-        agent:httpsAgent
     };
 
   return new Promise((resolve, reject) => {
@@ -129,13 +123,13 @@ var register_sensor = function (vendor, sensor_id,sensor_type, unit, description
         if (error) {
           console.log(error);
           console.log("Can not register sensor with datastore! waiting 5s before retrying");
-          setTimeout(request, 5000, options, register_sensor_callback);
+          setTimeout(databoxRequest, 5000, options, register_sensor_callback);
           return;
         }
         resolve(body);
     };
     console.log("Trying to register sensor with datastore.", options);
-    request(options,register_sensor_callback);
+    databoxRequest(options,register_sensor_callback);
   
   });
 };
@@ -206,5 +200,5 @@ function save(sensor_id,data) {
           },
           agent:httpsAgent
       };
-      request.post(options, (error, response, body) => { if(error) console.log(error, body);});
+      databoxRequest(options, (error, response, body) => { if(error) console.log(error, body);});
     }

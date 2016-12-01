@@ -1,4 +1,4 @@
-FROM node:node:alpine
+FROM node:alpine
 
 ADD package.json package.json
 RUN npm install && npm run clean
