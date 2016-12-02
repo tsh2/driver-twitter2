@@ -61,7 +61,6 @@ module.exports = function (options,callback) {
               invalidateMacaroon(host);
               return;
           } else if (result.response.statusCode != 200) {
-              console.log("TOSH 1")
               //API responded with an error
               callback(result.body,result.response,null);
               invalidateMacaroon(host);
