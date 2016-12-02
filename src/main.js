@@ -66,7 +66,8 @@ var waitForDatastore = function () {
     var untilActive = function (error, response, body) {
       if(error) {
         console.log(error);
-      } else if(response.statusCode != 200) {
+      } else if(response && response.statusCode != 200) {
+        console.log("TOSH 3");
         console.log("Error::", body);
       }
       if (body === 'active') {
@@ -198,7 +199,6 @@ function save(sensor_id,data) {
             'vendor_id': vendor, 
             'data': data   
           },
-          agent:httpsAgent
       };
       databoxRequest(options, (error, response, body) => { if(error) console.log(error, body);});
     }
