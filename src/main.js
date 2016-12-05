@@ -5,6 +5,7 @@ var bodyParser = require("body-parser");
 var session = require("express-session");
 
 var databoxRequest = require('./lib/databox-request.js');
+var databoxDatasourceHelper = require('./lib/databox-datasource-helper.js');
 
 var twitter = require('./twitter.js');
 var sensors = ['twitterUserTimeLine','twitterHashTagStream', 'twitterDirectMessage', 'twitterRetweet', 'twitterFavorite'];
@@ -61,32 +62,7 @@ var T = null;
 
 var vendor = "databox";
 
-var waitForDatastore = function () {
-  return new Promise((resolve, reject)=>{
-    var untilActive = function (error, response, body) {
-      if(error) {
-        console.log(error);
-      } else if(response && response.statusCode != 200) {
-        console.log("TOSH 3");
-        console.log("Error::", body);
-      }
-      if (body === 'active') {
-        resolve();
-      }
-      else {
-        setTimeout(() => {
-          var options = {
-              uri: DATABOX_STORE_BLOB_ENDPOINT + "/status",
-              method: 'GET',
-          };
-          databoxRequest(options, untilActive);
-        }, 1000);
-        console.log("Waiting for datastore ....");
-      }
-    };
-    untilActive({});
-  });
-};
+
 
 var waitForTwitterAuth = function () {
   return new Promise((resolve, reject)=>{
@@ -104,45 +80,16 @@ var waitForTwitterAuth = function () {
   });
 };
 
-var register_sensor = function (vendor, sensor_id,sensor_type, unit, description, location ) {
-  var options = {
-        uri: DATABOX_STORE_BLOB_ENDPOINT+'/cat/add/'+sensor_id,
-        method: 'POST',
-        json: 
-        {
-          "vendor": vendor,
-          "sensor_type": sensor_type,
-          "unit": unit,
-          "description": description,
-          "location": location,
-        },
-    };
 
-  return new Promise((resolve, reject) => {
-    
-    var register_sensor_callback = function (error, response, body) {
-        if (error) {
-          console.log(error);
-          console.log("Can not register sensor with datastore! waiting 5s before retrying");
-          setTimeout(databoxRequest, 5000, options, register_sensor_callback);
-          return;
-        }
-        resolve(body);
-    };
-    console.log("Trying to register sensor with datastore.", options);
-    databoxRequest(options,register_sensor_callback);
-  
-  });
-};
 
-waitForDatastore()
+databoxDatasourceHelper.waitForDatastore(DATABOX_STORE_BLOB_ENDPOINT)
   .then(() =>{
     proms = [
-      register_sensor(vendor, 'twitterUserTimeLine','twitterUserTimeLine', '', 'Twitter user timeline data', 'The Internet'),
-      register_sensor(vendor, 'twitterHashTagStream','twitterHashTagStream', '', 'Twitter hashtag data', 'The Internet'),
-      register_sensor(vendor, 'twitterDirectMessage','twitterDirectMessage', '', 'Twitter users direct messages', 'The Internet'),
-      register_sensor(vendor, 'twitterRetweet','twitterRetweet', '', 'Twitter users retweets', 'The Internet'),
-      register_sensor(vendor, 'twitterFavorite','twitterFavorite', '', 'Twitter users favorite tweets', 'The Internet')
+      databoxDatasourceHelper.registerDatasource(DATABOX_STORE_BLOB_ENDPOINT, vendor, 'twitterUserTimeLine','twitterUserTimeLine', '', 'Twitter user timeline data', 'The Internet'),
+      databoxDatasourceHelper.registerDatasource(DATABOX_STORE_BLOB_ENDPOINT, vendor, 'twitterHashTagStream','twitterHashTagStream', '', 'Twitter hashtag data', 'The Internet'),
+      databoxDatasourceHelper.registerDatasource(DATABOX_STORE_BLOB_ENDPOINT, vendor, 'twitterDirectMessage','twitterDirectMessage', '', 'Twitter users direct messages', 'The Internet'),
+      databoxDatasourceHelper.registerDatasource(DATABOX_STORE_BLOB_ENDPOINT, vendor, 'twitterRetweet','twitterRetweet', '', 'Twitter users retweets', 'The Internet'),
+      databoxDatasourceHelper.registerDatasource(DATABOX_STORE_BLOB_ENDPOINT, vendor, 'twitterFavorite','twitterFavorite', '', 'Twitter users favorite tweets', 'The Internet')
     ];
     return Promise.all(proms);
   })
