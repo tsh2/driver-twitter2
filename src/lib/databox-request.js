@@ -52,7 +52,7 @@ module.exports = function (options,callback) {
       .then((macaroon)=>{
           //do the request and call back when done
           options.headers = {'X-Api-Key': macaroon};
-          console.log("[databox-request] " + options.uri);
+          console.log("[databox-request-with-macaroon] ", options.uri, options.headers);
           request(options,callback);
       })
       .catch((result)=>{
@@ -86,7 +86,7 @@ function getMacaroon(host) {
         if(macaroonCache[host]) {
             console.log("returning cashed mac",macaroonCache);
             //TODO check if the macaroon has expired? for now if a request fails we invalidate the macaroon
-            resolve(macaroonCache.host);
+            resolve(macaroonCache[host]);
             return;
         }
 
