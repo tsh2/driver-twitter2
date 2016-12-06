@@ -1,30 +1,24 @@
 
 const request = require('request');
-const https = require('https');
 const url = require('url');
-
+const httpsAgent = require('./databox-https-agent.js');
+const macaroonCache = require('./databox-macaroon-cache.js');
 
 //
 //Databox ENV vars
 //
-const CM_HTTPS_CA_ROOT_CERT = process.env.CM_HTTPS_CA_ROOT_CERT || '';
-const ARBITER_TOKEN   = process.env.ARBITER_TOKEN;
 const DATABOX_ARBITER_ENDPOINT = process.env.DATABOX_ARBITER_ENDPOINT || "https://databox-arbiter:8080";
 
-
-//
-// An https.Agent to trust the CM https cert if one is provided
-//
-var agentOptions = {};
-if(CM_HTTPS_CA_ROOT_CERT === '') {
-console.log("WARNING[databox-request]:: no https root cert provided not checking https certs.");
-    agentOptions.rejectUnauthorized = false;
-} else {
-    agentOptions.ca = CM_HTTPS_CA_ROOT_CERT;
-}
-var httpsAgent = new https.Agent(agentOptions);
-
-
+/**
+ * This module wraps the node request module https://github.com/request/request and adds:
+ * 
+ * 1) an https agetnt that trust the container manger CA
+ * 2) appropriate arbiter token when communicating with the arbiter
+ * 3) Requests and caches macaroon form the arbiter before communicating with databox components other then the arbiter.
+ *   
+ * @param {object} options a request option object (The only required option is uri) 
+ * @param {function} callback a call back on completion. The callback argument gets 3 arguments error, response, body 
+ */
 module.exports = function (options,callback) {
 
   //use the databox https agent
@@ -48,7 +42,7 @@ module.exports = function (options,callback) {
       //
       // we are talking to another databox component so we need a macaroon!
       //
-      getMacaroon(host)
+      macaroonCache.getMacaroon(host)
       .then((macaroon)=>{
           //do the request and call back when done
           options.headers = {'X-Api-Key': macaroon};
@@ -58,12 +52,12 @@ module.exports = function (options,callback) {
       .catch((result)=>{
           if(result.error !== null) {
               callback(result.error,result.response,null);
-              invalidateMacaroon(host);
+              macaroonCache.invalidateMacaroon(host);
               return;
           } else if (result.response.statusCode != 200) {
               //API responded with an error
               callback(result.body,result.response,null);
-              invalidateMacaroon(host);
+              macaroonCache.invalidateMacaroon(host);
               return;
           }
       });
@@ -71,58 +65,3 @@ module.exports = function (options,callback) {
   }
 
 };
-
-
-var macaroonCache = {};
-/**
- * @param {host} The host name of the end point to request the macaroon
- * @return {Promise} A promise that resolves with a shared secret gotten from the arbiter
- * 
- * Gets a macaroon form the cache if one exists else it requests one from the arbiter. 
- */
-function getMacaroon(host) {
-    return new Promise((resolve, reject) => {
-
-        if(macaroonCache[host]) {
-            console.log("returning cashed mac",macaroonCache);
-            //TODO check if the macaroon has expired? for now if a request fails we invalidate the macaroon
-            resolve(macaroonCache[host]);
-            return;
-        }
-
-        //
-        // Macroon has not been requested. Get a new one.
-        //
-        var opts = {
-                uri: DATABOX_ARBITER_ENDPOINT+'/token',
-                method: 'POST',
-                form: {
-                            target: host,
-                        },
-                headers: {'X-Api-Key': ARBITER_TOKEN},
-                agent: httpsAgent
-            };
-        request(opts,function (error, response, body) {
-            if(error !== null) {
-                reject({error:error,response:response,body:null});
-                return;
-            } else if (response.statusCode != 200) {
-                //API responded with an error
-                reject({error:body,response:response,body:null});
-                return;
-            }
-            macaroonCache[host] = body;
-            resolve(macaroonCache[host]);
-        });
-    });
-}
-
-/**
- * @param {host} The host name of the end point to request the macaroon
- * @return void
- * 
- * Gets a macaroon form the cache if one exists else it requests one from the arbiter. 
- */
-function invalidateMacaroon(host) {
-    macaroonCache[host] = null;
-}
