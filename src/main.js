@@ -8,7 +8,6 @@ var databoxRequest = require('./lib/databox-request.js');
 var databoxDatasourceHelper = require('./lib/databox-datasource-helper.js');
 
 var twitter = require('./twitter.js');
-var sensors = ['twitterUserTimeLine','twitterHashTagStream', 'twitterDirectMessage', 'twitterRetweet', 'twitterFavorite'];
 
 var DATABOX_STORE_BLOB_ENDPOINT = process.env.DATABOX_DRIVER_TWITTER_STREAM_DATABOX_STORE_BLOB_ENDPOINT;
 
@@ -21,12 +20,6 @@ var credentials = {
 
 var HASH_TAGS_TO_TRACK = ['#raspberrypi', '#mozfest', '#databox', '#iot', '#NobelPrize'];
 var TWITER_USER = 'databox_mozfest';
-
-var SENSOR_TYPE_IDs = [];
-var SENSOR_IDs = {};
-var VENDOR_ID = null;
-var DRIVER_ID = null;
-var DATASTORE_ID = null;
 
 
 var allowCrossDomain = function(req, res, next) {
@@ -62,26 +55,6 @@ var T = null;
 
 var vendor = "databox";
 
-
-
-var waitForTwitterAuth = function () {
-  return new Promise((resolve, reject)=>{
-    
-    var waitForIt = function() {
-      if(twitter.isSignedIn() === true) {
-        resolve();
-      } else {
-        console.log("Waiting to twitter auth .....");
-        setTimeout(waitForIt,2000);
-      }
-
-    };
-    waitForIt();
-  });
-};
-
-
-
 databoxDatasourceHelper.waitForDatastore(DATABOX_STORE_BLOB_ENDPOINT)
   .then(() =>{
     proms = [
@@ -96,12 +69,11 @@ databoxDatasourceHelper.waitForDatastore(DATABOX_STORE_BLOB_ENDPOINT)
   })
   .then(()=>{
     https.createServer(credentials, app).listen(8080);
-    return waitForTwitterAuth();
+    return twitter.waitForTwitterAuth();
   })
   .then(()=>{
 
     T = twitter.Twit();
-
     var HashtagStream = T.stream('statuses/filter', { track: HASH_TAGS_TO_TRACK , language:'en'});
     HashtagStream.on('tweet', function (tweet) {
       save('twitterHashTagStream', tweet);
@@ -136,15 +108,13 @@ databoxDatasourceHelper.waitForDatastore(DATABOX_STORE_BLOB_ENDPOINT)
 
 module.exports = app;
 
-function save(sensor_id,data) {
-      console.log("Saving data::", sensor_id, data.text);
+function save(datasourceid,data) {
+      console.log("Saving data::", datasourceid, data.text);
       var options = {
-          uri: DATABOX_STORE_BLOB_ENDPOINT + '/data',
+          uri: DATABOX_STORE_BLOB_ENDPOINT + '/write/ts/'+datasourceid,
           method: 'POST',
           json: 
           {
-            'sensor_id': sensor_id, 
-            'vendor_id': vendor, 
             'data': data   
           },
       };
