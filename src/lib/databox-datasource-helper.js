@@ -6,83 +6,8 @@ const httpsAgent = require('./databox-https-agent.js');
 const macaroonCache = require('./databox-macaroon-cache.js');
 const url = require('url');
 
-
-
 /**
- * Register an actuator with a datastore, subscribe for live updates and register callback 
- * 
- * @param {string} storeEndPoint The datastore uri
- * @param {string} driverName The name of the driver registering the datasource 
- * @param {string} actuatorName The name of the actuator (must be unique within a driver datastore pair)
- * @param {string} type The urn:X-databox:rels:sensortype
- * @param {string} unit The measurements unit if applicable 
- * @param {string} description Human readable description
- * @param {string} location A location for the device as a human readable string 
- * @param {function} onDataCallback A function to callback when new data is available i.e where their is a request for actuation.
- * @returns
- */
-module.exports.registerActuator = function (storeEndPoint, driverName, actuatorName, type, unit, description, location, onDataCallback) {
-  
-  return new Promise((resolve, reject) => {
-  
-    register(storeEndPoint, driverName, actuatorName, type, unit, description, location, true)
-    .then(()=>{
-      //connect to ws
-      return openWS(storeEndPoint);
-    })
-    .then(() => {
-      
-      //register callback
-      wsCallbacks[actuatorName] = onDataCallback;
-      
-      //SUB for data
-      var options = {
-        uri: storeEndPoint+'/sub/'+actuatorName,
-        method: "GET"
-      };
-      console.log("[WS] trying to subscribe for updates.", options);
-      databoxRequest(options,(error,response,data)=>{
-        if (error) {
-          console.log("[ERROR] Can not register actuator subscription with datastore!", error);
-          reject(error);
-          return;
-        } else if(response && response.statusCode != 200) {
-          console.log("[ERROR] Can not register actuator subscription with datastore!", body);
-          reject(body);
-          return;
-        }
-        console.log("[WS] subscribed for updates for " + actuatorName);
-        resolve();
-      });
-    })
-    .catch((err)=>{
-      reject(err);
-    }) ;
-  
-  });
-
-};
-
-/**
- * Register a  datasource with a datastore  
- * 
- * @param {string} storeEndPoint The datastore uri
- * @param {string} driverName The name of the driver registering the datasource 
- * @param {string} datasourceName The name of the datasource (must be unique within a driver datastore pair)
- * @param {string} type The urn:X-databox:rels:sensortype
- * @param {string} unit The measurements unit if applicable 
- * @param {string} description Human readable description
- * @param {string} location A location for the device as a human readable string 
- * @param {function} onDataCallback A function to callback when new data is available.
- * @returns
- */
-module.exports.registerDatasource = function (storeEndPoint, driverName, datasourceName, type, unit, description, location) {
-  return register(storeEndPoint, driverName, datasourceName, type, unit, description, location, false);
-};
-
-
-/**
- *  internal function to register a  datasource or actuator with a datastore
+ *  Build a valid hypercat item for databox and register it with a datastore
  * 
  * @param {string} storeEndPoint The datastore uri
  * @param {string} driverName The name of the driver registering the datasource 
@@ -92,42 +17,139 @@ module.exports.registerDatasource = function (storeEndPoint, driverName, datasou
  * @param {string} description Human readable description
  * @param {string} location A location for the device as a human readable string 
  * @param {bool} isActuator is this an actuator?
- * @returns
+ * @returns {Promise} an Hypercat item 
  */
-register = function (storeEndPoint, driverName, datasourceName, type, unit, description, location, isActuator) {
+module.exports.buildAndRegisterHypercatItem = function (storeEndPoint, storeType, driverName, datasourceName, 
+                                                          type, unit, description, location, isActuator) {
+  
+  return registerDatasource(
+                    storeEndPoint, 
+                    buildHypercatItem(  storeEndPoint, 
+                                        storeType, 
+                                        driverName, 
+                                        datasourceName, 
+                                        type, 
+                                        unit, 
+                                        description, 
+                                        location, 
+                                        isActuator)
+                 );
+};
+
+
+/**
+ *  Build a valid hypercat item for databox
+ * 
+ * @param {string} storeEndPoint The datastore uri
+ * @param {string} driverName The name of the driver registering the datasource 
+ * @param {string} datasourceName The name of the datasource (must be unique within a driver datastore pair)
+ * @param {string} type The urn:X-databox:rels:sensortype
+ * @param {string} unit The measurements unit if applicable 
+ * @param {string} description Human readable description
+ * @param {string} location A location for the device as a human readable string 
+ * @param {bool} isActuator is this an actuator?
+ * @returns {object} an Hypercat item 
+ */
+var buildHypercatItem = function ( storeEndPoint, storeType, driverName, datasourceName, 
+                                    type, unit, description, location, isActuator) {
+  item = {
+    "item-metadata": [
+      {
+        // NOTE: Required
+        "rel": "urn:X-hypercat:rels:hasDescription:en",
+        "val": description
+      }, {
+        // NOTE: Required
+        "rel": "urn:X-hypercat:rels:isContentType",
+        "val": "text/json"
+      },
+      {
+        // NOTE: Required
+        "rel": "urn:X-databox:rels:hasVendor",
+        "val": driverName
+      },
+      {
+        // NOTE: Required
+        "rel": "urn:X-databox:rels:hasType",
+        "val": type
+      },
+      {
+        // NOTE: Required
+        "rel": "urn:X-databox:rels:hasLocation",
+        "val": location
+      },
+      {
+				"rel": "urn:X-databox:rels:hasDatasourceid",
+				"val": datasourceName
+			},
+      {
+        // NOTE: Required
+        "rel": "urn:X-databox:rels:hasStoreType",
+        "val": storeType
+      }
+    ],
+    "href": storeEndPoint
+  };
+
+  //
+  // optional 
+  //
+  if (description !== null || description !== '') {
+    item["item-metadata"].push({
+      "rel": "urn:X-databox:rels:hasDescription",
+      "val": description
+    });
+  }
+  if (unit !== null || unit !== '') {
+    item["item-metadata"].push({
+      "rel": "urn:X-databox:rels:hasUnit",
+      "val": unit
+    });
+  }
+  if (isActuator) {
+    item["item-metadata"].push({
+      "rel": "urn:X-databox:rels:isActuator",
+      "val": true
+    });
+  }
+
+  return item;
+};
+module.exports.buildHypercatItem = buildHypercatItem;
+
+/**
+ *  Function to register a datasource or actuator with a datastore
+ *  @param {Object} an hypercat Item to register
+ *  @returns {Promise}
+ */
+var registerDatasource = function (storeEndPoint, hypercatItems) {
+
   var options = {
-        uri: storeEndPoint+'/cat/add/'+datasourceName,
-        method: 'POST',
-        json: 
-        {
-          "vendor": driverName,
-          "sensor_type": type,
-          "unit": unit,
-          "description": description,
-          "location": location,
-          "isActuator": isActuator,
-        },
-    };
+    uri: storeEndPoint + '/cat',
+    method: 'POST',
+    json: hypercatItems
+  };
 
   return new Promise((resolve, reject) => {
-    
+
     var register_datasource_callback = function (error, response, body) {
-        if (error) {
-          console.log("[ERROR] Can not register with datastore! waiting 5s before retrying", error);
-          setTimeout(databoxRequest, 5000, options, register_datasource_callback);
-          return;
-        } else if(response && response.statusCode != 200) {
-          console.log("[ERROR] Can not register with datastore! waiting 5s before retrying", body, error);
-          setTimeout(databoxRequest, 5000, options, register_datasource_callback);
-          return;
-        }
-        resolve(body);
+      if (error) {
+        console.log("[ERROR] Can not register with datastore! waiting 5s before retrying", error);
+        setTimeout(databoxRequest, 5000, options, register_datasource_callback);
+        return;
+      } else if (response && response.statusCode != 200) {
+        console.log("[ERROR] Can not register with datastore! waiting 5s before retrying", response.statusCode, body);
+        setTimeout(databoxRequest, 5000, options, register_datasource_callback);
+        return;
+      }
+      resolve(body);
     };
     console.log("Trying to register with datastore.", options);
-    databoxRequest(options,register_datasource_callback);
-  
+    databoxRequest(options, register_datasource_callback);
+
   });
 };
+module.exports.registerDatasource = registerDatasource;
 
 /**
  * Waits for a datastore to become active by checking its /status endpoint
@@ -136,11 +158,11 @@ register = function (storeEndPoint, driverName, datasourceName, type, unit, desc
  * @returns Promise
  */
 module.exports.waitForDatastore = function (storeEndPoint) {
-  return new Promise((resolve, reject)=>{
+  return new Promise((resolve, reject) => {
     var untilActive = function (error, response, body) {
-      if(error) {
+      if (error) {
         console.log(error);
-      } else if(response && response.statusCode != 200) {
+      } else if (response && response.statusCode != 200) {
         console.log("Error::", body);
       }
       if (body === 'active') {
@@ -148,14 +170,14 @@ module.exports.waitForDatastore = function (storeEndPoint) {
       }
       else {
         var options = {
-              uri: storeEndPoint + "/status",
-              method: 'GET',
-              agent: httpsAgent
-          };
+          uri: storeEndPoint + "/status",
+          method: 'GET',
+          agent: httpsAgent
+        };
         setTimeout(() => {
           databoxRequest(options, untilActive);
         }, 1000);
-        console.log("Waiting for datastore ....", error, body,options);
+        console.log("Waiting for datastore ....", error, body, options);
       }
     };
     untilActive({});
@@ -166,7 +188,7 @@ module.exports.waitForDatastore = function (storeEndPoint) {
 /*
 * Web sockets to handle actuator monitoring 
 */
-var ws = null; 
+var ws = null;
 var wsCallbacks = {};
 
 /**
@@ -179,10 +201,10 @@ var wsCallbacks = {};
  */
 function openWS(storeEndPoint) {
   return new Promise((resolve, reject) => {
-    
-    if(ws === null) {
-     
-      var wsEndPoint = storeEndPoint+'/ws';
+
+    if (ws === null) {
+
+      var wsEndPoint = storeEndPoint + '/ws';
 
       var urlObject = url.parse(wsEndPoint);
       var path = urlObject.pathname;
@@ -190,26 +212,26 @@ function openWS(storeEndPoint) {
 
       console.log("[WS] trying to open WS at" + wsEndPoint);
       macaroonCache.getMacaroon(host)
-      .then((macaroon)=>{
-        ws = new WebSocketClient(wsEndPoint,{'agent':httpsAgent, headers: {'X-Api-Key': macaroon}});
-        ws.on('open', function open() {
-          console.log("[WS] for actuator callbacks opened");
-          resolve();
-        });
-      
-        ws.on('message', function(data, flags) {
-            console.log("[WS] data received",data, flags);
-        });
+        .then((macaroon) => {
+          ws = new WebSocketClient(wsEndPoint, { 'agent': httpsAgent, headers: { 'X-Api-Key': macaroon } });
+          ws.on('open', function open() {
+            console.log("[WS] for actuator callbacks opened");
+            resolve();
+          });
 
-        ws.on('error', function(data, flags) {
-            console.log("[WS] ERROR",data, flags);
-        });
+          ws.on('message', function (data, flags) {
+            console.log("[WS] data received", data, flags);
+          });
 
-      })
-      .catch((error)=>{
-        console.log("[WS] ERROR");
-        reject(error);
-      });
+          ws.on('error', function (data, flags) {
+            console.log("[WS] ERROR", data, flags);
+          });
+
+        })
+        .catch((error) => {
+          console.log("[WS] ERROR");
+          reject(error);
+        });
     } else {
       resolve();
     }

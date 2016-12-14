@@ -58,12 +58,12 @@ var vendor = "databox";
 databoxDatasourceHelper.waitForDatastore(DATABOX_STORE_BLOB_ENDPOINT)
   .then(() =>{
     proms = [
-      databoxDatasourceHelper.registerDatasource(DATABOX_STORE_BLOB_ENDPOINT, vendor, 'twitterUserTimeLine','twitterUserTimeLine', '', 'Twitter user timeline data', 'The Internet'),
-      databoxDatasourceHelper.registerDatasource(DATABOX_STORE_BLOB_ENDPOINT, vendor, 'twitterHashTagStream','twitterHashTagStream', '', 'Twitter hashtag data', 'The Internet'),
-      databoxDatasourceHelper.registerDatasource(DATABOX_STORE_BLOB_ENDPOINT, vendor, 'twitterDirectMessage','twitterDirectMessage', '', 'Twitter users direct messages', 'The Internet'),
-      databoxDatasourceHelper.registerDatasource(DATABOX_STORE_BLOB_ENDPOINT, vendor, 'twitterRetweet','twitterRetweet', '', 'Twitter users retweets', 'The Internet'),
-      databoxDatasourceHelper.registerDatasource(DATABOX_STORE_BLOB_ENDPOINT, vendor, 'twitterFavorite','twitterFavorite', '', 'Twitter users favorite tweets', 'The Internet'),
-      databoxDatasourceHelper.registerActuator(DATABOX_STORE_BLOB_ENDPOINT, vendor, 'Test', 'Test', 'n/a', 'n/a', 'Test Actuator', 'In the databox', function (err,data) {console.log("[TEST-actuator-cb]",err,data);})
+      databoxDatasourceHelper.buildAndRegisterHypercatItem(DATABOX_STORE_BLOB_ENDPOINT, 'databox-store-blob', vendor, 'twitterUserTimeLine','twitterUserTimeLine', '', 'Twitter user timeline data', 'The Internet'),
+      databoxDatasourceHelper.buildAndRegisterHypercatItem(DATABOX_STORE_BLOB_ENDPOINT, 'databox-store-blob', vendor, 'twitterHashTagStream','twitterHashTagStream', '', 'Twitter hashtag data', 'The Internet'),
+      databoxDatasourceHelper.buildAndRegisterHypercatItem(DATABOX_STORE_BLOB_ENDPOINT, 'databox-store-blob', vendor, 'twitterDirectMessage','twitterDirectMessage', '', 'Twitter users direct messages', 'The Internet'),
+      databoxDatasourceHelper.buildAndRegisterHypercatItem(DATABOX_STORE_BLOB_ENDPOINT, 'databox-store-blob', vendor, 'twitterRetweet','twitterRetweet', '', 'Twitter users retweets', 'The Internet'),
+      databoxDatasourceHelper.buildAndRegisterHypercatItem(DATABOX_STORE_BLOB_ENDPOINT, 'databox-store-blob', vendor, 'twitterFavorite','twitterFavorite', '', 'Twitter users favorite tweets', 'The Internet'),
+      databoxDatasourceHelper.buildAndRegisterHypercatItem(DATABOX_STORE_BLOB_ENDPOINT, 'databox-store-blob', vendor, 'Test', 'Test', 'n/a', 'n/a', 'Test Actuator', 'In the databox', function (err,data) {console.log("[TEST-actuator-cb]",err,data);})
     ];
     return Promise.all(proms);
   })

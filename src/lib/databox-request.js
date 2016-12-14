@@ -37,7 +37,7 @@ module.exports = function (options,callback) {
       options.headers = {'X-Api-Key': ARBITER_TOKEN};
       //do the request and call back when done
       console.log("[databox-request] " + options.uri);
-      request(options,callback);
+      return request(options,callback);
   } else {
       //
       // we are talking to another databox component so we need a macaroon!
@@ -47,7 +47,7 @@ module.exports = function (options,callback) {
           //do the request and call back when done
           options.headers = {'X-Api-Key': macaroon};
           console.log("[databox-request-with-macaroon] ", options.uri, options.headers);
-          request(options,callback);
+          return request(options,callback);
       })
       .catch((result)=>{
           if(result.error !== null) {
