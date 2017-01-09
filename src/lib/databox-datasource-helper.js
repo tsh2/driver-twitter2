@@ -7,7 +7,7 @@ const macaroonCache = require('./databox-macaroon-cache.js');
 const url = require('url');
 
 /**
- *  Build a valid hypercat item for databox and register it with a datastore
+ *  Build a valid hypercat item for a databox Datasource and register it with a datastore
  * 
  * @param {string} storeEndPoint The datastore uri
  * @param {string} driverName The name of the driver registering the datasource 
@@ -16,13 +16,12 @@ const url = require('url');
  * @param {string} unit The measurements unit if applicable 
  * @param {string} description Human readable description
  * @param {string} location A location for the device as a human readable string 
- * @param {bool} isActuator is this an actuator?
  * @returns {Promise} an Hypercat item 
  */
-module.exports.buildAndRegisterHypercatItem = function (storeEndPoint, storeType, driverName, datasourceName, 
-                                                          type, unit, description, location, isActuator) {
+module.exports.registerDatasource = function (storeEndPoint, storeType, driverName, datasourceName, 
+                                                          type, unit, description, location) {
   
-  return registerDatasource(
+  return register(
                     storeEndPoint, 
                     buildHypercatItem(  storeEndPoint, 
                                         storeType, 
@@ -31,9 +30,41 @@ module.exports.buildAndRegisterHypercatItem = function (storeEndPoint, storeType
                                         type, 
                                         unit, 
                                         description, 
-                                        location, 
-                                        isActuator)
+                                        location
+                                      )
                  );
+};
+
+/**
+ *  Build a valid hypercat item for a databox actuator and register it with a datastore
+ * 
+ * @param {string} storeEndPoint The datastore uri
+ * @param {string} driverName The name of the driver registering the datasource 
+ * @param {string} datasourceName The name of the datasource (must be unique within a driver datastore pair)
+ * @param {string} type The urn:X-databox:rels:sensortype
+ * @param {string} unit The measurements unit if applicable 
+ * @param {string} description Human readable description
+ * @param {string} location A location for the device as a human readable string 
+ * @returns {Promise} an Hypercat item 
+ */
+module.exports.registerActuator = function (storeEndPoint, storeType, driverName, datasourceName, 
+                                                          type, unit, description, location, callback) {
+  var item = buildHypercatItem(   storeEndPoint, 
+                                  storeType, 
+                                  driverName, 
+                                  datasourceName, 
+                                  type, 
+                                  unit, 
+                                  description, 
+                                  location
+                               );
+    
+  item["item-metadata"].push({
+    "rel": "urn:X-databox:rels:isActuator",
+    "val": true
+  });
+
+  return register(storeEndPoint,item);
 };
 
 
@@ -47,11 +78,10 @@ module.exports.buildAndRegisterHypercatItem = function (storeEndPoint, storeType
  * @param {string} unit The measurements unit if applicable 
  * @param {string} description Human readable description
  * @param {string} location A location for the device as a human readable string 
- * @param {bool} isActuator is this an actuator?
  * @returns {object} an Hypercat item 
  */
 var buildHypercatItem = function ( storeEndPoint, storeType, driverName, datasourceName, 
-                                    type, unit, description, location, isActuator) {
+                                    type, unit, description, location) {
   item = {
     "item-metadata": [
       {
@@ -106,23 +136,16 @@ var buildHypercatItem = function ( storeEndPoint, storeType, driverName, datasou
       "val": unit
     });
   }
-  if (isActuator) {
-    item["item-metadata"].push({
-      "rel": "urn:X-databox:rels:isActuator",
-      "val": true
-    });
-  }
 
   return item;
 };
-module.exports.buildHypercatItem = buildHypercatItem;
 
 /**
  *  Function to register a datasource or actuator with a datastore
  *  @param {Object} an hypercat Item to register
  *  @returns {Promise}
  */
-var registerDatasource = function (storeEndPoint, hypercatItems) {
+var register = function (storeEndPoint, hypercatItems) {
 
   var options = {
     uri: storeEndPoint + '/cat',
@@ -146,10 +169,8 @@ var registerDatasource = function (storeEndPoint, hypercatItems) {
     };
     console.log("Trying to register with datastore.", options);
     databoxRequest(options, register_datasource_callback);
-
   });
 };
-module.exports.registerDatasource = registerDatasource;
 
 /**
  * Waits for a datastore to become active by checking its /status endpoint
