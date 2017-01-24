@@ -118,7 +118,7 @@ var buildHypercatItem = function ( storeEndPoint, storeType, driverName, datasou
         "val": storeType
       }
     ],
-    "href": storeEndPoint
+    "href": storeEndPoint + '/' + datasourceName
   };
 
   //
