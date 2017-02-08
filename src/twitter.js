@@ -76,11 +76,26 @@ flutter = new Flutter({
     res.redirect('close');
   }});
 
-
 exports.Twit = function () {return T};
 exports.connect = flutter.connect;
 exports.auth = flutter.auth;
-exports.isSignedIn = function () { return isSignedIn};
+exports.isSignedIn = function () { return isSignedIn};;
+
+exports.waitForTwitterAuth = function () {
+  return new Promise((resolve, reject)=>{
+    
+    var waitForIt = function() {
+      if(isSignedIn === true) {
+        resolve();
+      } else {
+        console.log("Waiting to twitter auth .....");
+        setTimeout(waitForIt,2000);
+      }
+
+    };
+    waitForIt();
+  });
+};
 
 //export fetch = (url, data, callback) -> flutter.API.fetch url, data, access-token, secret, callback
 
