@@ -4,7 +4,7 @@ var express = require("express");
 var bodyParser = require("body-parser");
 var session = require("express-session");
 
-var databoxRequest = require('./lib/databox-request.js');
+var databoxRequest = require('./lib/databox-request-promise.js');
 var databoxDatasourceHelper = require('./lib/databox-datasource-helper.js');
 
 var twitter = require('./twitter.js');
@@ -111,7 +111,7 @@ module.exports = app;
 function save(datasourceid,data) {
       console.log("Saving data::", datasourceid, data.text);
       var options = {
-          uri: DATABOX_STORE_BLOB_ENDPOINT + '/write/ts/'+datasourceid,
+          uri: DATABOX_STORE_BLOB_ENDPOINT + "/" + datasourceid + '/ts/',
           method: 'POST',
           json: 
           {
