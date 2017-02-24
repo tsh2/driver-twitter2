@@ -19,7 +19,7 @@ function getMacaroon(host) {
     return new Promise((resolve, reject) => {
 
         if(macaroonCache[host]) {
-            console.log("returning cashed mac",macaroonCache);
+            console.log("[macaroonCache] returning cashed macaroon");
             //TODO check if the macaroon has expired? for now if a request fails we invalidate the macaroon
             resolve(macaroonCache[host]);
             return;
@@ -28,6 +28,7 @@ function getMacaroon(host) {
         //
         // Macroon has not been requested. Get a new one.
         //
+        console.log("[macaroonCache] cashed macaroon not found for " + host + " requesting one");
         var opts = {
                 uri: DATABOX_ARBITER_ENDPOINT+'/token',
                 method: 'POST',
@@ -37,16 +38,20 @@ function getMacaroon(host) {
                 headers: {'X-Api-Key': ARBITER_TOKEN},
                 agent: httpsAgent
             };
+        
         request(opts,function (error, response, body) {
             if(error !== null) {
+                console.log("[macaroonCache] Request Error:: ", error);
                 reject(error);
                 return;
             } else if (response.statusCode != 200) {
+                console.log("[macaroonCache] API Error:: ", body);
                 //API responded with an error
                 reject(body);
                 return;
             }
             macaroonCache[host] = body;
+            console.log("[macaroonCache] returning new macaroon");
             resolve(macaroonCache[host]);
         });
     });

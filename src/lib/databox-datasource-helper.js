@@ -1,5 +1,5 @@
 
-var databoxRequest = require('./databox-request.js');
+var databoxRequest = require('./databox-request-promise.js');
 //var request = require('request');
 const WebSocketClient = require('ws');
 const httpsAgent = require('./databox-https-agent.js');

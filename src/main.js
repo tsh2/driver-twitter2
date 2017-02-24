@@ -4,18 +4,18 @@ var express = require("express");
 var bodyParser = require("body-parser");
 var session = require("express-session");
 
-var databoxRequest = require('./lib/databox-request.js');
+var databoxRequest = require('./lib/databox-request-promise.js');
 var databoxDatasourceHelper = require('./lib/databox-datasource-helper.js');
 
 var twitter = require('./twitter.js');
 
 var DATABOX_STORE_BLOB_ENDPOINT = process.env.DATABOX_DRIVER_TWITTER_STREAM_DATABOX_STORE_BLOB_ENDPOINT;
 
-var HTTPS_CLIENT_CERT = process.env.HTTPS_CLIENT_CERT || '';
-var HTTPS_CLIENT_PRIVATE_KEY = process.env.HTTPS_CLIENT_PRIVATE_KEY || '';
+var HTTPS_SERVER_CERT = process.env.HTTPS_SERVER_CERT || '';
+var HTTPS_SERVER_PRIVATE_KEY = process.env.HTTPS_SERVER_PRIVATE_KEY || '';
 var credentials = {
-	key:  HTTPS_CLIENT_PRIVATE_KEY,
-	cert: HTTPS_CLIENT_CERT,
+	key:  HTTPS_SERVER_PRIVATE_KEY,
+	cert: HTTPS_SERVER_CERT,
 };
 
 var HASH_TAGS_TO_TRACK = ['#raspberrypi', '#mozfest', '#databox', '#iot', '#NobelPrize'];
@@ -58,12 +58,12 @@ var vendor = "databox";
 databoxDatasourceHelper.waitForDatastore(DATABOX_STORE_BLOB_ENDPOINT)
   .then(() =>{
     proms = [
-      databoxDatasourceHelper.registerDatasource(DATABOX_STORE_BLOB_ENDPOINT, 'databox-store-blob', vendor, 'twitterUserTimeLine','twitterUserTimeLine', '', 'Twitter user timeline data', 'The Internet'),
-      databoxDatasourceHelper.registerDatasource(DATABOX_STORE_BLOB_ENDPOINT, 'databox-store-blob', vendor, 'twitterHashTagStream','twitterHashTagStream', '', 'Twitter hashtag data', 'The Internet'),
-      databoxDatasourceHelper.registerDatasource(DATABOX_STORE_BLOB_ENDPOINT, 'databox-store-blob', vendor, 'twitterDirectMessage','twitterDirectMessage', '', 'Twitter users direct messages', 'The Internet'),
-      databoxDatasourceHelper.registerDatasource(DATABOX_STORE_BLOB_ENDPOINT, 'databox-store-blob', vendor, 'twitterRetweet','twitterRetweet', '', 'Twitter users retweets', 'The Internet'),
-      databoxDatasourceHelper.registerDatasource(DATABOX_STORE_BLOB_ENDPOINT, 'databox-store-blob', vendor, 'twitterFavorite','twitterFavorite', '', 'Twitter users favorite tweets', 'The Internet'),
-      databoxDatasourceHelper.registerActuator(DATABOX_STORE_BLOB_ENDPOINT, 'databox-store-blob', vendor, 'Test', 'Test', 'n/a', 'n/a', 'Test Actuator', 'In the databox', function (err,data) {console.log("[TEST-actuator-cb]",err,data);})
+      databoxDatasourceHelper._SERVER_Datasource(DATABOX_STORE_BLOB_ENDPOINT, 'databox-store-blob', vendor, 'twitterUserTimeLine','twitterUserTimeLine', '', 'Twitter user timeline data', 'The Internet'),
+      databoxDatasourceHelper._SERVER_Datasource(DATABOX_STORE_BLOB_ENDPOINT, 'databox-store-blob', vendor, 'twitterHashTagStream','twitterHashTagStream', '', 'Twitter hashtag data', 'The Internet'),
+      databoxDatasourceHelper._SERVER_Datasource(DATABOX_STORE_BLOB_ENDPOINT, 'databox-store-blob', vendor, 'twitterDirectMessage','twitterDirectMessage', '', 'Twitter users direct messages', 'The Internet'),
+      databoxDatasourceHelper._SERVER_Datasource(DATABOX_STORE_BLOB_ENDPOINT, 'databox-store-blob', vendor, 'twitterRetweet','twitterRetweet', '', 'Twitter users retweets', 'The Internet'),
+      databoxDatasourceHelper._SERVER_Datasource(DATABOX_STORE_BLOB_ENDPOINT, 'databox-store-blob', vendor, 'twitterFavorite','twitterFavorite', '', 'Twitter users favorite tweets', 'The Internet'),
+      databoxDatasourceHelper._SERVER_Actuator(DATABOX_STORE_BLOB_ENDPOINT, 'databox-store-blob', vendor, 'Test', 'Test', 'n/a', 'n/a', 'Test Actuator', 'In the databox', function (err,data) {console.log("[TEST-actuator-cb]",err,data);})
     ];
     return Promise.all(proms);
   })
@@ -111,7 +111,7 @@ module.exports = app;
 function save(datasourceid,data) {
       console.log("Saving data::", datasourceid, data.text);
       var options = {
-          uri: DATABOX_STORE_BLOB_ENDPOINT + '/write/ts/'+datasourceid,
+          uri: DATABOX_STORE_BLOB_ENDPOINT + "/" + datasourceid + '/ts/',
           method: 'POST',
           json: 
           {
