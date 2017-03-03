@@ -40,11 +40,8 @@
     "express-session": "^1.14.1",
     "flutter": "0.0.5",
     "modclean": "",
-    "nedb": "^1.8.0",
-    "promise": "^7.1.1",
-    "request": "^2.75.0",
-    "twit": "^2.2.5",
-    "ws": "^2.0.3"
+    "node-databox": "^0.1.0",
+    "twit": "^2.2.5"
   },
   "devDependencies": {
     "assert": "^1.4.1",
