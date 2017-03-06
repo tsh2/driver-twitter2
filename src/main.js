@@ -154,7 +154,7 @@ module.exports = app;
 function save(datasourceid,data) {
       console.log("Saving data::", datasourceid, data.text);
       
-      databox.timeseries.write(DATABOX_STORE_BLOB_ENDPOINT, datasourceid, {'data': data})
+      databox.timeseries.write(DATABOX_STORE_BLOB_ENDPOINT, datasourceid, data)
       .catch((error)=>{
         console.log("[Error writing to store]" + error);
       });
