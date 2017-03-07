@@ -10,6 +10,16 @@ var twitter = require('./twitter.js');
 
 var DATABOX_STORE_BLOB_ENDPOINT = process.env.DATABOX_DRIVER_TWITTER_STREAM_DATABOX_STORE_BLOB_ENDPOINT;
 
+var HTTPS_SERVER_CERT = process.env.HTTPS_SERVER_CERT || '';
+var HTTPS_SERVER_PRIVATE_KEY = process.env.HTTPS_SERVER_PRIVATE_KEY || '';
+var credentials = {
+	key:  HTTPS_SERVER_PRIVATE_KEY,
+	cert: HTTPS_SERVER_CERT,
+};
+
+
+var PORT = process.env.port || '8080';
+
 var HASH_TAGS_TO_TRACK = ['#raspberrypi', '#mozfest', '#databox', '#iot', '#NobelPrize'];
 var TWITER_USER = 'databox_mozfest';
 
@@ -34,20 +44,14 @@ app.get("/status", function(req, res) {
     res.send("active");
 });
 
-app.get("/connect", twitter.connect);
-
-app.get("/callback", twitter.auth);
-app.get("/databox-driver-twitter-stream/callback", twitter.auth); //fake endpoint for debugging outside of databox
-
-app.get("/is-signed-in", function(req, res) {
-    res.end('' + twitter.isSignedIn());
-});
-
 var T = null;
 
 var vendor = "databox";
 
-  databox.waitForStoreStatus(DATABOX_STORE_BLOB_ENDPOINT,'active',10)
+  //databox.waitForStoreStatus(DATABOX_STORE_BLOB_ENDPOINT,'active',10)
+  new Promise((resolve,reject)=>{
+    setTimeout(resolve,1000);
+  })
   .then(() => {
     
     proms = [
@@ -55,7 +59,7 @@ var vendor = "databox";
         description: 'Twitter user timeline data',
         contentType: 'text/json',
         vendor: 'Databox Inc.',
-        type: 'Test',
+        type: 'twitterUserTimeLine',
         datasourceid: 'twitterUserTimeLine',
         storeType: 'databox-store-blob'
       }),
@@ -64,7 +68,7 @@ var vendor = "databox";
         description: 'Twitter hashtag data',
         contentType: 'text/json',
         vendor: 'Databox Inc.',
-        type: 'Test',
+        type: 'twitterHashTagStream',
         datasourceid: 'twitterHashTagStream',
         storeType: 'databox-store-blob'
       }),
@@ -73,7 +77,7 @@ var vendor = "databox";
         description: 'Twitter users direct messages',
         contentType: 'text/json',
         vendor: 'Databox Inc.',
-        type: 'Test',
+        type: 'twitterDirectMessage',
         datasourceid: 'twitterDirectMessage',
         storeType: 'databox-store-blob'
       }),
@@ -82,7 +86,7 @@ var vendor = "databox";
         description: 'Twitter users retweets',
         contentType: 'text/json',
         vendor: 'Databox Inc.',
-        type: 'Test',
+        type: 'twitterRetweet',
         datasourceid: 'twitterRetweet',
         storeType: 'databox-store-blob'
       }),
@@ -91,7 +95,7 @@ var vendor = "databox";
         description: 'Twitter users favorite tweets',
         contentType: 'text/json',
         vendor: 'Databox Inc.',
-        type: 'Test',
+        type: 'twitterFavorite',
         datasourceid: 'twitterFavorite',
         storeType: 'databox-store-blob'
       }),
@@ -100,8 +104,8 @@ var vendor = "databox";
         description: 'Test Actuator',
         contentType: 'text/json',
         vendor: 'Databox Inc.',
-        type: 'Test',
-        datasourceid: 'TestActuator',
+        type: 'testActuator',
+        datasourceid: 'testActuator',
         storeType: 'databox-store-blob',
         isActuator:true
       })
@@ -111,19 +115,28 @@ var vendor = "databox";
   })
   .then(()=>{
     console.log("[Creating server] and twitter Auth");
-    https.createServer(credentials, app).listen(8080);
+    https.createServer(credentials, app).listen(PORT);
     return twitter.waitForTwitterAuth();
   })
   .then(()=>{
 
     T = twitter.Twit();
+
+    console.log('Start event handlers:', T);
+    var stream = T.stream('statuses/filter', { track: '#apple', language: 'en' })
+ 
+     stream.on('tweet', function (tweet) {
+        console.log(tweet)  
+      });
+
+
     var HashtagStream = T.stream('statuses/filter', { track: HASH_TAGS_TO_TRACK , language:'en'});
+    console.log('HashtagStream:', HashtagStream)
     HashtagStream.on('tweet', function (tweet) {
       save('twitterHashTagStream', tweet);
     });
 
     var UserStream = T.stream('user', { stringify_friend_ids: true, with: 'followings', replies:'all' });
-    
     UserStream.on('tweet', function (event) {
       save('twitterUserTimeLine',event);
     });
@@ -146,7 +159,7 @@ var vendor = "databox";
     
   })
   .catch((err) => {
-    console.log(err);
+    console.log("[ERROR]",err);
   });
 
 module.exports = app;
@@ -156,6 +169,6 @@ function save(datasourceid,data) {
       
       databox.timeseries.write(DATABOX_STORE_BLOB_ENDPOINT, datasourceid, data)
       .catch((error)=>{
-        console.log("[Error writing to store]" + error);
+        console.log("[Error writing to store]", error);
       });
     }
