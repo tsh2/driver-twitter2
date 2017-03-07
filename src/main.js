@@ -169,6 +169,6 @@ function save(datasourceid,data) {
       
       databox.timeseries.write(DATABOX_STORE_BLOB_ENDPOINT, datasourceid, data)
       .catch((error)=>{
-        console.log("[Error writing to store]" + error);
+        console.log("[Error writing to store]", error);
       });
     }
