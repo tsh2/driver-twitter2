@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "A Databox driver to stream data from twitter",
   "config": {
-    "registry": "registry.iotdatabox.com"
+    "registry": "localhost:5000"
   },
   "scripts": {
     "test": "./node_modules/mocha/bin/mocha",
@@ -40,7 +40,7 @@
     "express-session": "^1.14.1",
     "flutter": "0.0.5",
     "modclean": "",
-    "node-databox": "^0.1.0",
+    "node-databox": "^0.2.0",
     "twit": "^2.2.5"
   },
   "devDependencies": {

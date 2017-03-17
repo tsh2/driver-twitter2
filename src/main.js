@@ -120,6 +120,30 @@ var vendor = "databox";
   })
   .then(()=>{
 
+    //deal with the actuator
+    var actuationEmitter = null; 
+    databox.subscriptions.connect(DATABOX_STORE_BLOB_ENDPOINT)
+    .catch((err)=>{
+      console.log("[Actuation connect error]",err);
+    })
+    .then((eventEmitter)=>{
+      actuationEmitter = eventEmitter;
+      return databox.subscriptions.subscribe(DATABOX_STORE_BLOB_ENDPOINT,'testActuator','ts');
+    })
+    .catch((err)=>{
+      console.log("[Actuation subscribe error]",err);
+    })
+    .then(()=>{
+      actuationEmitter.on('data',(endpointHost, actuatorId, data)=>{
+        console.log("[Actuation] data received",endpointHost, actuatorId, data);
+      });
+    })
+    .catch((err)=>{
+      console.log("[Actuation error]",err);
+    });
+
+
+    //deal with twitter events 
     T = twitter.Twit();
 
     console.log('Start event handlers:', T);
@@ -131,7 +155,7 @@ var vendor = "databox";
 
 
     var HashtagStream = T.stream('statuses/filter', { track: HASH_TAGS_TO_TRACK , language:'en'});
-    console.log('HashtagStream:', HashtagStream)
+
     HashtagStream.on('tweet', function (tweet) {
       save('twitterHashTagStream', tweet);
     });
