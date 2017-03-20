@@ -1,6 +1,6 @@
-var Twit = require('twit')
-var twitConfigPath = './src/twitter-secret.json';
-var twitConfig = require('./twitter-secret.json');
+/*jshint esversion: 6 */
+
+var Twit = require('twit');
 
 var T = null;
 
@@ -8,50 +8,48 @@ var accessToken = null;
 var secret = null;
 var isSignedIn = false;
 
-//try to connect with stored creds
-T = new Twit({
-      consumer_key:         twitConfig.consumer_key,
-      consumer_secret:      twitConfig.consumer_secret,
-      access_token:         twitConfig.access_token,
-      access_token_secret:  twitConfig.access_token_secret,
-      timeout_ms:           60*1000,  // optional HTTP request timeout to apply to all requests. 
-    })
+module.exports = function () {
 
-new Promise((resolve, reject) => {
-  T.get('account/verify_credentials', { }, function (err, data, response) {
-    //console.log(err, data);
-    if(err) {
-      reject(err)
-      return;
-    }
-    resolve(data);
-  });
-})
-.then((result) => {
-  isSignedIn = true;
-  console.log('Creds OK');
-})
-.catch((err) => {
-  console.log('twitter-secret.json has wrong creds', err);
-  isSignedIn = false;
-});
+  let isSignedIn = false;
 
-exports.Twit = function () {return T};
-exports.isSignedIn = function () { return isSignedIn};
-
-exports.waitForTwitterAuth = function () {
-  return new Promise((resolve, reject)=>{
+  let T = null;
     
-    var waitForIt = function() {
-      if(isSignedIn === true) {
-        resolve();
-      } else {
-        console.log("Waiting to twitter auth .....");
-        setTimeout(waitForIt,2000);
-      }
+    var connect = function(creds) {
+      isSignedIn = false;
+
+      return new Promise((resolve, reject)=>{
+        T = new Twit({
+          consumer_key:         creds.consumer_key,
+          consumer_secret:      creds.consumer_secret,
+          access_token:         creds.access_token,
+          access_token_secret:  creds.access_token_secret,
+          timeout_ms:           60*1000,  // optional HTTP request timeout to apply to all requests. 
+        })
+
+        T.get('account/verify_credentials', { }, function (err, data, response) {
+          if(err) {
+            reject(err);
+            return;
+          }
+          resolve(T);
+        })
+        .then((result) => {
+          isSignedIn = true;
+          console.log('Creds OK');
+        })
+        .catch((err) => {
+          console.log('twitter-secret.json has wrong creds', err);
+          reject(err);
+          isSignedIn = false;
+        });
+      });
 
     };
-    waitForIt();
-  });
-};
 
+    return {
+      'Twit':T,
+      'isSignedIn': function () { return isSignedIn;},
+      'connect':connect
+    };
+
+};
