@@ -62,12 +62,14 @@ app.get('/ui/setCreds', function(req, res) {
       return setSettings(settings);
     })
     .then((settings)=>{
-      return twitter.connect(settings);
+      return Promise.all([twitter.connect(settings),Promise.resolve(settings)]);
     })
-    .then((T)=>{
-        stopAllStreams();
-        monitorTwitterEvents(T);
-        res.status(200).send({statusCode:200, body:"ok"});
+    .then((data)=>{
+      let T = data[0];
+      let settings = data[1];
+      stopAllStreams();
+      monitorTwitterEvents(T,settings);
+      res.status(200).send({statusCode:200, body:"ok"});
     })
     .catch((error)=>{
       console.log("[setCreds] Error ",error);
@@ -85,12 +87,14 @@ app.get('/ui/setHashTags', function(req, res) {
       return setSettings(settings);
     })
     .then((settings)=>{
-      return twitter.connect(settings);
+      return Promise.all([twitter.connect(settings),Promise.resolve(settings)]);
     })
-    .then((T)=>{
-        stopAllStreams();
-        monitorTwitterEvents(T);
-        res.status(200).send({statusCode:200, body:"ok"});
+    .then((data)=>{
+      let T = data[0];
+      let settings = data[1];
+      stopAllStreams();
+      monitorTwitterEvents(T,settings);
+      res.status(200).send({statusCode:200, body:"ok"});
     })
     .catch((error)=>{
       console.log("[setHashTags] Error ",error);
@@ -187,9 +191,11 @@ var vendor = "databox";
     https.createServer(credentials, app).listen(PORT);
 
     console.log("Twitter Auth");
-    return twitter.connect(settings);
+    return Promise.all([twitter.connect(settings),Promise.resolve(settings)]);
   })
-  .then((T)=>{
+  .then((data)=>{
+    let T = data[0];
+    let settings = data[1];
 
     //deal with the actuator
     var actuationEmitter = null; 
@@ -213,7 +219,7 @@ var vendor = "databox";
       console.log("[Actuation error]",err);
     });
 
-    monitorTwitterEvents(T);
+    monitorTwitterEvents(T,settings);
     
   })
   .catch((err) => {
@@ -224,10 +230,10 @@ module.exports = app;
 
 
 var streams = [];
-const monitorTwitterEvents = (twit)=>{
+const monitorTwitterEvents = (twit,settings)=>{
 
       //deal with twitter events 
-    var HashtagStream = twit.stream('statuses/filter', { track: HASH_TAGS_TO_TRACK , language:'en'});
+    var HashtagStream = twit.stream('statuses/filter', { track: settings.hashTags , language:'en'});
     streams.push(HashtagStream);
     HashtagStream.on('tweet', function (tweet) {
       save('twitterHashTagStream', tweet);

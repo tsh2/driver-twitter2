@@ -49,13 +49,13 @@ html(lang='en')
 											'access_token_secret': $('#access_token_secret').val()
 										})
 					.done(()=>{
-						$('#creds_msg').text(' saved')
+						$('#creds_msg').text(' saved!')
 					})
 				});
 				$('#save_hashtags').click(function(){
 					$.get('ui/setHashTags', { 'hashTags': $('#hasTags').val()})
 					.done(()=>{
-						$('#hashtag_msg').text(' saved')
+						$('#hashtag_msg').text(' saved!')
 					})
 				});
 			});
