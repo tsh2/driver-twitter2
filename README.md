@@ -1,14 +1,25 @@
 # databox-driver-twitter-stream
-A Databox driver to stream data from twitter
+
+A Databox driver to stream data from twitter. This driver supports twitter streaming API and usess app auth. 
+
+Its provides an example of settings persistance and the use of datasources. It also has a test actuator. 
+
 
 # Status
 
-This is work in progress.
+This is work in progress but getting better ;-).
 
 # Authentication
 
-overwrite twitter-secrets.json with the consumer_key and consumer_secret. When running within the databox OAuth is then used to finally authenticate the user with twitter. This is accessed by visiting /ui/databox-driver-twitter-stream/.
+If you wish to use this driver with your own twitter account then. 
 
+     - Go to https://apps.twitter.com/ and log in 
+     - Click create new app
+     - Fill in the form (set website to http://127.0.0.1) agree to the T&C's 
+     - Then go to the 'Keys and Access Tokens' tab
+     - Click on "Create my access token"
+     - Then in databox find the driver tab and click on the twitter driver
+     - Copy and past Consumer Key, Consumer Secret, Access Token, Access Token Secret into the driver and click save. 
 
 # Data stored
 This driver writes twitter event data into a databox-store-blob for later processing.
