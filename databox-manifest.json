@@ -4,7 +4,7 @@
   "name": "databox-driver-twitter-stream",
   "version": "0.1.0",
 
-  "description": "A simple Databox store for json blob data",
+  "description": "A simple Databox driver to stream twitter data",
   "author": "Anthony Brown <Anthony.Brown@nottingham.ac.uk> ()",
   "license": "MIT",
 

@@ -1,0 +1,78 @@
+doctype html
+html(lang='en')
+	head
+		title Databox Mobile Driver
+		script(src='ui/jquery-3.2.0.min.js')
+		style.
+			body  {
+				font-size: 1.25rem;
+				font-weight: 300;
+			}
+			
+			h1 {
+				font-size: 2.5rem;
+				margin-bottom: 1rem;
+			}		
+			h2 {
+				font-size: 1.75rem;
+				margin-bottom: .8rem;
+			}		
+			p, ul {
+				margin: .5rem;
+			}
+			label {
+				display: inline-block;
+				width: 10em;
+			}
+			input {
+				font-size: 1rem;
+			}
+	body
+		h1 Databox Twitter Driver
+		h2 Twitter Credentuals (https://apps.twitter.com/)
+		p
+			label(for='consumer_key') #{'Consumer Key'}
+			input(id='consumer_key', type='input', value=consumer_key)
+		p
+			label(for='consumer_secret') #{'Consumer Secret'}
+			input(id='consumer_secret', type='input', value=consumer_secret)
+		p
+			label(for='access_token') #{'Access Token'}
+			input(id='access_token', type='input', value=access_token)
+		p
+			label(for='access_token_secret') #{'Access Token Secret'}
+			input(id='access_token_secret', type='input', value=access_token_secret)
+		p
+			button(id='save_creds' type='button' value='Save') Save
+			span(id='creds_msg')
+
+		h2 HashTags for twitter hastag stream (https://apps.twitter.com/)
+		p A comma seperated list of HashTags  
+		p
+			label(for='hasTags') #{'Hash Tags'}
+			input(id='hasTags', type='input', value=hashTags)
+		p
+			button(id='save_hashtags' type='button' value='save') Save
+			span(id='hashtag_msg')
+
+		script.
+			$(document).ready(function(){
+
+				$('#save_creds').click(function(){
+					$.get('ui/setCreds', { 
+											'consumer_key':$('#consumer_key').val(),
+											'consumer_secret':$('#consumer_secret').val(),
+											'access_token':$('#access_token').val(),
+											'access_token_secret': $('#access_token_secret').val()
+										})
+					.done(()=>{
+						$('#creds_msg').text(' saved!')
+					})
+				});
+				$('#save_hashtags').click(function(){
+					$.get('ui/setHashTags', { 'hashTags': $('#hasTags').val()})
+					.done(()=>{
+						$('#hashtag_msg').text(' saved!')
+					})
+				});
+			});
