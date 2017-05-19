@@ -2,10 +2,10 @@
 const https = require('https');
 const express = require("express");
 const bodyParser = require("body-parser");
-const session = require("express-session");
 const fs = require('fs');
 
-var twitter = require('./twitter.js');
+var twitter = require('./twitter.js')();
+
 const DefaultTwitConfig = require('./twitter-secret.json');
 
 var DATABOX_STORE_BLOB_ENDPOINT = process.env.DATABOX_STORE_ENDPOINT;
@@ -17,10 +17,10 @@ var credentials = {
 };		
 
 //TODO fix this in node-databox lib
- process.env.ARBITER_TOKEN = fs.readFileSync("/run/secrets/ARBITER_TOKEN",{encoding:'base64'});
- process.env.DATABOX_ARBITER_ENDPOINT = "https://databox-arbiter:8080";
- process.env.CM_HTTPS_CA_ROOT_CERT = fs.readFileSync("/run/secrets/DATABOX_ROOT_CA");
- const databox = require('node-databox');
+process.env.ARBITER_TOKEN = fs.readFileSync("/run/secrets/ARBITER_TOKEN",{encoding:'base64'});
+process.env.DATABOX_ARBITER_ENDPOINT = "https://databox-arbiter:8080";
+process.env.CM_HTTPS_CA_ROOT_CERT = fs.readFileSync("/run/secrets/DATABOX_ROOT_CA");
+const databox = require('node-databox');
 
 var PORT = process.env.port || '8080';
 
@@ -34,7 +34,7 @@ var allowCrossDomain = function(req, res, next) {
     res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With');
     res.header('Content-Type', 'application/json');
     next();
-};*/
+};
 
 var app = express();
 
@@ -204,7 +204,7 @@ databox.waitForStoreStatus(DATABOX_STORE_BLOB_ENDPOINT,'active',10)
     let settings = data[1];
 
     //deal with the actuator
-    /*var actuationEmitter = null; 
+    var actuationEmitter = null; 
     databox.subscriptions.connect(DATABOX_STORE_BLOB_ENDPOINT)
     .catch((err)=>{
       console.log("[Actuation connect error]",err);
@@ -223,7 +223,7 @@ databox.waitForStoreStatus(DATABOX_STORE_BLOB_ENDPOINT,'active',10)
     })
     .catch((err)=>{
       console.log("[Actuation error]",err);
-    });*/
+    });
 
     monitorTwitterEvents(T,settings);
     
