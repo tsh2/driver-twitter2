@@ -2,33 +2,39 @@
 const https = require('https');
 const express = require("express");
 const bodyParser = require("body-parser");
-const session = require("express-session");
+const fs = require('fs');
 
+var twitter = require('./twitter.js')();
+
+const DefaultTwitConfig = require('./twitter-secret.json');
+
+var DATABOX_STORE_BLOB_ENDPOINT = process.env.DATABOX_STORE_ENDPOINT;
+
+const HTTPS_SECRETS = JSON.parse( fs.readFileSync("/run/secrets/DATABOX_PEM") );
+var credentials = {
+  key:  HTTPS_SECRETS.clientprivate || '',
+  cert: HTTPS_SECRETS.clientcert || '',
+};		
+
+//TODO fix this in node-databox lib
+process.env.ARBITER_TOKEN = fs.readFileSync("/run/secrets/ARBITER_TOKEN",{encoding:'base64'});
+process.env.DATABOX_ARBITER_ENDPOINT = "https://databox-arbiter:8080";
+process.env.CM_HTTPS_CA_ROOT_CERT = fs.readFileSync("/run/secrets/DATABOX_ROOT_CA");
 const databox = require('node-databox');
 
-//some defaults
-const DefaultTwitConfig = require('./twitter-secret.json');
-const HASH_TAGS_TO_TRACK = ['#raspberrypi', '#mozfest', '#databox', '#iot']; 
+var PORT = process.env.port || '8080';
 
-const twitter = require('./twitter.js')();
+var HASH_TAGS_TO_TRACK = ['#raspberrypi', '#mozfest', '#databox', '#iot', '#NobelPrize'];
+var TWITER_USER = 'databox_mozfest';
 
-//Databox Env Vars
-const DATABOX_STORE_BLOB_ENDPOINT = process.env.DATABOX_DRIVER_TWITTER_STREAM_DATABOX_STORE_BLOB_ENDPOINT;
-const HTTPS_SERVER_CERT = process.env.HTTPS_SERVER_CERT || '';
-const HTTPS_SERVER_PRIVATE_KEY = process.env.HTTPS_SERVER_PRIVATE_KEY || '';
-const credentials = {
-	key:  HTTPS_SERVER_PRIVATE_KEY,
-	cert: HTTPS_SERVER_CERT,
-};
-const PORT = process.env.port || '8080';
 
-/*var allowCrossDomain = function(req, res, next) {
+var allowCrossDomain = function(req, res, next) {
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
     res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With');
     res.header('Content-Type', 'application/json');
     next();
-};*/
+};
 
 var app = express();
 
@@ -111,7 +117,7 @@ var T = null;
 
 var vendor = "databox";
 
-  databox.waitForStoreStatus(DATABOX_STORE_BLOB_ENDPOINT,'active',10)
+databox.waitForStoreStatus(DATABOX_STORE_BLOB_ENDPOINT,'active',10)
   .then(() => {
     //register datasources
     proms = [
@@ -122,7 +128,7 @@ var vendor = "databox";
         type: 'twitterUserTimeLine',
         datasourceid: 'twitterUserTimeLine',
         storeType: 'databox-store-blob'
-      }),
+      }).then((err,data)=>{console.log("DS Added",DATABOX_STORE_BLOB_ENDPOINT,err,data)}),
 
       databox.catalog.registerDatasource(DATABOX_STORE_BLOB_ENDPOINT, {
         description: 'Twitter hashtag data',
