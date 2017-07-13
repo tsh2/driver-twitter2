@@ -1,5 +1,5 @@
 {
-  "name": "databox-driver-twitter-stream",
+  "name": "driver-twitter",
   "version": "1.0.0",
   "description": "A Databox driver to stream data from twitter",
   "config": {
@@ -8,20 +8,20 @@
   "scripts": {
     "test": "./node_modules/mocha/bin/mocha",
     "start": "node ./src/main.js",
-    "build": "docker build -t databox/databox-driver-twitter-stream .",
-    "deploy": "docker tag databox/databox-driver-twitter-stream $npm_package_config_registry/databox-driver-twitter-stream && docker push $npm_package_config_registry/databox-driver-twitter-stream",
-    "build-arm": "docker build -f Dockerfile-arm -t databox/databox-driver-twitter-stream-arm .",
-    "deploy-arm": "docker tag databox/databox-driver-twitter-stream-arm $npm_package_config_registry/databox-driver-twitter-stream-arm && docker push $npm_package_config_registry/databox-driver-twitter-stream-arm",
+    "build": "docker build -t databox/driver-twitter .",
+    "deploy": "docker tag databox/driver-twitter $npm_package_config_registry/driver-twitter && docker push $npm_package_config_registry/driver-twitter",
+    "build-arm": "docker build -f Dockerfile-arm -t databox/driver-twitter-arm .",
+    "deploy-arm": "docker tag databox/driver-twitter-arm $npm_package_config_registry/driver-twitter-arm && docker push $npm_package_config_registry/driver-twitter-arm",
     "clean": "node ./node_modules/modclean/bin/modclean.js -p ./node_modules/ -r",
-    "getshell": "docker exec -i -t databox-driver-twitter-stream /bin/bash",
-    "kill": "docker kill databox-driver-twitter-stream",
-    "attach": "docker attach databox-driver-twitter-stream",
-    "shell": "docker run -i -t databox/databox-driver-twitter-stream /bin/bash",
-    "local": "docker run -i -t databox/databox-driver-twitter-stream"
+    "getshell": "docker exec -i -t driver-twitter /bin/bash",
+    "kill": "docker kill driver-twitter",
+    "attach": "docker attach driver-twitter",
+    "shell": "docker run -i -t databox/driver-twitter /bin/bash",
+    "local": "docker run -i -t databox/driver-twitter"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Toshbrown/databox-driver-twitter-stream.git"
+    "url": "git+https://github.com/Toshbrown/driver-twitter.git"
   },
   "keywords": [
     "Databox",
@@ -31,14 +31,14 @@
   "author": "Anthony Brown",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/Toshbrown/databox-driver-twitter-stream/issues"
+    "url": "https://github.com/Toshbrown/driver-twitter/issues"
   },
-  "homepage": "https://github.com/Toshbrown/databox-driver-twitter-stream#readme",
+  "homepage": "https://github.com/Toshbrown/driver-twitter#readme",
   "dependencies": {
     "body-parser": "^1.15.2",
     "express": "^4.14.0",
     "modclean": "",
-    "node-databox": "^0.4.0",
+    "node-databox": "^0.5.0",
     "promise": "^7.1.1",
     "request": "^2.75.0",
     "url": "^0.11.0",

@@ -4,6 +4,8 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const fs = require('fs');
 
+const databox = require('node-databox');
+
 var twitter = require('./twitter.js')();
 
 const DefaultTwitConfig = require('./twitter-secret.json');
@@ -15,12 +17,6 @@ var credentials = {
   key:  HTTPS_SECRETS.clientprivate || '',
   cert: HTTPS_SECRETS.clientcert || '',
 };		
-
-//TODO fix this in node-databox lib
-process.env.ARBITER_TOKEN = fs.readFileSync("/run/secrets/ARBITER_TOKEN",{encoding:'base64'});
-process.env.DATABOX_ARBITER_ENDPOINT = "https://databox-arbiter:8080";
-process.env.CM_HTTPS_CA_ROOT_CERT = fs.readFileSync("/run/secrets/DATABOX_ROOT_CA");
-const databox = require('node-databox');
 
 var PORT = process.env.port || '8080';
 
@@ -127,7 +123,7 @@ databox.waitForStoreStatus(DATABOX_STORE_BLOB_ENDPOINT,'active',10)
         vendor: 'Databox Inc.',
         type: 'twitterUserTimeLine',
         datasourceid: 'twitterUserTimeLine',
-        storeType: 'databox-store-blob'
+        storeType: 'store-json'
       }).then((err,data)=>{console.log("DS Added",DATABOX_STORE_BLOB_ENDPOINT,err,data)}),
 
       databox.catalog.registerDatasource(DATABOX_STORE_BLOB_ENDPOINT, {
@@ -136,7 +132,7 @@ databox.waitForStoreStatus(DATABOX_STORE_BLOB_ENDPOINT,'active',10)
         vendor: 'Databox Inc.',
         type: 'twitterHashTagStream',
         datasourceid: 'twitterHashTagStream',
-        storeType: 'databox-store-blob'
+        storeType: 'store-json'
       }),
 
       databox.catalog.registerDatasource(DATABOX_STORE_BLOB_ENDPOINT, {
@@ -145,7 +141,7 @@ databox.waitForStoreStatus(DATABOX_STORE_BLOB_ENDPOINT,'active',10)
         vendor: 'Databox Inc.',
         type: 'twitterDirectMessage',
         datasourceid: 'twitterDirectMessage',
-        storeType: 'databox-store-blob'
+        storeType: 'store-json'
       }),
 
       databox.catalog.registerDatasource(DATABOX_STORE_BLOB_ENDPOINT, {
@@ -154,7 +150,7 @@ databox.waitForStoreStatus(DATABOX_STORE_BLOB_ENDPOINT,'active',10)
         vendor: 'Databox Inc.',
         type: 'twitterRetweet',
         datasourceid: 'twitterRetweet',
-        storeType: 'databox-store-blob'
+        storeType: 'store-json'
       }),
 
       databox.catalog.registerDatasource(DATABOX_STORE_BLOB_ENDPOINT, {
@@ -163,7 +159,7 @@ databox.waitForStoreStatus(DATABOX_STORE_BLOB_ENDPOINT,'active',10)
         vendor: 'Databox Inc.',
         type: 'twitterFavorite',
         datasourceid: 'twitterFavorite',
-        storeType: 'databox-store-blob'
+        storeType: 'store-json'
       }),
 
       databox.catalog.registerDatasource(DATABOX_STORE_BLOB_ENDPOINT, {
@@ -172,7 +168,7 @@ databox.waitForStoreStatus(DATABOX_STORE_BLOB_ENDPOINT,'active',10)
         vendor: 'Databox Inc.',
         type: 'testActuator',
         datasourceid: 'testActuator',
-        storeType: 'databox-store-blob',
+        storeType: 'store-json',
         isActuator:true
       }),
 
@@ -182,7 +178,7 @@ databox.waitForStoreStatus(DATABOX_STORE_BLOB_ENDPOINT,'active',10)
         vendor: 'Databox Inc.',
         type: 'twitterSettings',
         datasourceid: 'twitterSettings',
-        storeType: 'databox-store-blob',
+        storeType: 'store-json',
       })
 
     ];
