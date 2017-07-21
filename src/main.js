@@ -12,11 +12,7 @@ const DefaultTwitConfig = require('./twitter-secret.json');
 
 var DATABOX_STORE_BLOB_ENDPOINT = process.env.DATABOX_STORE_ENDPOINT;
 
-const HTTPS_SECRETS = JSON.parse( fs.readFileSync("/run/secrets/DATABOX_PEM") );
-var credentials = {
-  key:  HTTPS_SECRETS.clientprivate || '',
-  cert: HTTPS_SECRETS.clientcert || '',
-};		
+const credentials = databox.getHttpsCredentials();
 
 var PORT = process.env.port || '8080';
 
