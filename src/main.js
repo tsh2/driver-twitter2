@@ -8,10 +8,11 @@ const databox = require('node-databox');
 
 var twitter = require('./twitter.js')();
 
+let DefaultTwitConfig = null;
 try {
-  let DefaultTwitConfig = require('./twitter-secret.json');
+  DefaultTwitConfig = require('./twitter-secret.json');
 } catch (e) {
-  let DefaultTwitConfig = null;
+  DefaultTwitConfig = null;
 }
 
 var DATABOX_STORE_BLOB_ENDPOINT = process.env.DATABOX_STORE_ENDPOINT;
