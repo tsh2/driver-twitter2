@@ -8,7 +8,11 @@ const databox = require('node-databox');
 
 var twitter = require('./twitter.js')();
 
-const DefaultTwitConfig = require('./twitter-secret.json');
+try {
+  let DefaultTwitConfig = require('./twitter-secret.json');
+} catch (e) {
+  let DefaultTwitConfig = null;
+}
 
 var DATABOX_STORE_BLOB_ENDPOINT = process.env.DATABOX_STORE_ENDPOINT;
 
@@ -189,7 +193,11 @@ databox.waitForStoreStatus(DATABOX_STORE_BLOB_ENDPOINT,'active',10)
     https.createServer(credentials, app).listen(PORT);
 
     console.log("Twitter Auth");
-    return Promise.all([twitter.connect(settings),Promise.resolve(settings)]);
+    if(settings != null) {
+      return Promise.all([twitter.connect(settings),Promise.resolve(settings)]);
+    } else {
+      return Promise.all([Promise.resolve(null),Promise.resolve(settings)]);
+    }
   })
   .then((data)=>{
     let T = data[0];
@@ -217,7 +225,9 @@ databox.waitForStoreStatus(DATABOX_STORE_BLOB_ENDPOINT,'active',10)
       console.log("[Actuation error]",err);
     });
 
-    monitorTwitterEvents(T,settings);
+    if(T != null) {
+      monitorTwitterEvents(T,settings);
+    }
     
   })
   .catch((err) => {
