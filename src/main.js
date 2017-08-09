@@ -57,10 +57,11 @@ app.get('/ui/setCreds', function(req, res) {
   
   getSettings()
     .then((settings)=>{
-      settings.consumer_key = res.query.consumer_key;
-      settings.consumer_secret = res.query.consumer_secret;
-      settings.access_token = res.query.access_token;
-      settings.access_token_secret = res.query.access_token_secret;
+      console.log("/ui/setCreds - setting == ", settings, res.query);
+      settings.consumer_key = req.param('consumer_key');
+      settings.consumer_secret = req.param('consumer_secret');
+      settings.access_token = req.param('access_token');
+      settings.access_token_secret = req.param('access_token_secret');
       console.log("[NEW SETTINGS]",settings);
       return setSettings(settings);
     })
@@ -194,7 +195,7 @@ databox.waitForStoreStatus(DATABOX_STORE_BLOB_ENDPOINT,'active',10)
     https.createServer(credentials, app).listen(PORT);
 
     console.log("Twitter Auth");
-    if(settings != null) {
+    if(Object.keys(settings).length === 0) {
       return Promise.all([twitter.connect(settings),Promise.resolve(settings)]);
     } else {
       return Promise.all([Promise.resolve(null),Promise.resolve(settings)]);
@@ -284,18 +285,16 @@ const getSettings = () => {
    databox.keyValue.read(endpoint,datasourceid)
    .then((settings)=>{
      if(settings.status && settings.status == 404) {
-      return Promise.reject('No setting found.');
+        //return defaults
+      let settings = DefaultTwitConfig;
+      settings.hashTags = HASH_TAGS_TO_TRACK;
+      console.log("[getSettings] using defaults Using ----> ", settings);
+      resolve(settings);
+      return 
      }
      console.log("[getSettings]",settings);
      resolve(settings);
    })
-   .catch((err)=>{
-     //return defaults
-     let settings = DefaultTwitConfig;
-     settings.hashTags = HASH_TAGS_TO_TRACK;
-     console.log("[getSettings] using defaults ",err, ' Using ----> ', settings);
-     resolve(settings);
-   });
 
  });
 }
