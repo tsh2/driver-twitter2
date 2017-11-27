@@ -13,8 +13,10 @@ module.exports = function () {
   let isSignedIn = false;
 
   let T = null;
-    
+
     var connect = function(creds) {
+      console.log("Connecting to twitter!!");
+
       isSignedIn = false;
 
       return new Promise((resolve, reject)=>{
@@ -23,7 +25,7 @@ module.exports = function () {
           consumer_secret:      creds.consumer_secret,
           access_token:         creds.access_token,
           access_token_secret:  creds.access_token_secret,
-          timeout_ms:           60*1000,  // optional HTTP request timeout to apply to all requests. 
+          timeout_ms:           60*1000,  // optional HTTP request timeout to apply to all requests.
         })
 
         T.get('account/verify_credentials', { }, function (err, data, response) {
@@ -38,7 +40,6 @@ module.exports = function () {
           console.log('Creds OK');
         })
         .catch((err) => {
-          console.log('twitter-secret.json has wrong creds', err);
           reject(err);
           isSignedIn = false;
         });

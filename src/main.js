@@ -45,7 +45,7 @@ app.get('/ui', function(req, res) {
   getSettings()
     .then((settings)=>{
       settings.hashTags = settings.hashTags.join(',');
-      console.log("[/ui render]");   
+      console.log("[/ui render]");
       res.render('index', settings);
     })
     .catch((error)=>{
@@ -54,7 +54,7 @@ app.get('/ui', function(req, res) {
 });
 
 app.get('/ui/setCreds', function(req, res) {
-  
+
   getSettings()
     .then((settings)=>{
       console.log("/ui/setCreds - setting == ", settings, res.query);
@@ -184,10 +184,11 @@ databox.waitForStoreStatus(DATABOX_STORE_BLOB_ENDPOINT,'active',10)
       })
 
     ];
-    
+
     return Promise.all(proms);
   })
-  .then(()=>{
+  .then((res)=>{
+    console.log("GET SETTINGS", res);
     return getSettings();
   })
   .then((settings)=>{
@@ -195,18 +196,20 @@ databox.waitForStoreStatus(DATABOX_STORE_BLOB_ENDPOINT,'active',10)
     https.createServer(credentials, app).listen(PORT);
 
     console.log("Twitter Auth");
-    if(Object.keys(settings).length === 0) {
+    if(Object.keys(settings).length !== 0) {
       return Promise.all([twitter.connect(settings),Promise.resolve(settings)]);
     } else {
       return Promise.all([Promise.resolve(null),Promise.resolve(settings)]);
     }
   })
   .then((data)=>{
+    console.log("Connected to twitter!");
+
     let T = data[0];
     let settings = data[1];
 
     //deal with the actuator
-    var actuationEmitter = null; 
+    var actuationEmitter = null;
     databox.subscriptions.connect(DATABOX_STORE_BLOB_ENDPOINT)
     .catch((err)=>{
       console.log("[Actuation connect error]",err);
@@ -230,7 +233,7 @@ databox.waitForStoreStatus(DATABOX_STORE_BLOB_ENDPOINT,'active',10)
     if(T != null) {
       monitorTwitterEvents(T,settings);
     }
-    
+
   })
   .catch((err) => {
     console.log("[ERROR]",err);
@@ -242,13 +245,15 @@ module.exports = app;
 var streams = [];
 const monitorTwitterEvents = (twit,settings)=>{
 
-      //deal with twitter events 
+    console.log("monitorTwitterEvents called");
+
+      //deal with twitter events
     var HashtagStream = twit.stream('statuses/filter', { track: settings.hashTags , language:'en'});
     streams.push(HashtagStream);
     HashtagStream.on('tweet', function (tweet) {
       save('twitterHashTagStream', tweet);
     });
-    
+
     var UserStream = twit.stream('user', { stringify_friend_ids: true, with: 'followings', replies:'all' });
     streams.push(UserStream);
     UserStream.on('tweet', function (event) {
@@ -290,14 +295,20 @@ const getSettings = () => {
       settings.hashTags = HASH_TAGS_TO_TRACK;
       console.log("[getSettings] using defaults Using ----> ", settings);
       resolve(settings);
-      return 
+      return
      }
      console.log("[getSettings]",settings);
      resolve(settings);
    })
-
+   .catch((err)=>{
+    let settings = DefaultTwitConfig;
+    settings.hashTags = HASH_TAGS_TO_TRACK;
+    console.log("[getSettings] using defaults Using ----> ", settings);
+    resolve(settings);
+    return
+   });
  });
-}
+};
 
 const setSettings = (settings) => {
  let endpoint = DATABOX_STORE_BLOB_ENDPOINT;
