@@ -19,10 +19,10 @@
     "timeseries"
   ],
 
-  "homepage": "https://github.com/me-box/driver-twitter",
+  "homepage": "https://github.com/tsh2/driver-twitter",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/me-box/driver-twitter.git"
+    "url": "git+https://github.com/tsh2/driver-twitter.git"
   },
 
   "network-permissions": [
